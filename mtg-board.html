@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tabletop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{--felt:#14352c;--felt2:#0f2a23;--wood:#3b2616;--gold:#e3b95a;--ink:#f3ead7;--w:96px;--h:134px;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--wood);color:var(--ink);font:15px/1.3 Georgia,"Iowan Old Style",serif}
+#app{display:grid;grid-template-rows:auto 1fr 168px;height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--wood);flex-wrap:wrap}
+button{font:inherit;color:var(--ink);background:#5a3b22;border:1px solid #7d5733;border-radius:8px;padding:9px 14px;min-height:44px;touch-action:manipulation}
+button:active{background:#7d5733}
+button.z{min-width:92px;text-align:left}
+button.z b{display:block;color:var(--gold);font-size:18px;line-height:1}
+.life{display:flex;align-items:center;gap:6px;margin-left:auto}
+.life span{font-size:28px;min-width:48px;text-align:center;color:var(--gold)}
+.hl{outline:3px solid var(--gold);outline-offset:-3px}
+#bf{position:relative;background:radial-gradient(ellipse at 50% 40%,var(--felt),var(--felt2));overflow:hidden;touch-action:none}
+#bf .hint{position:absolute;inset:0;display:grid;place-items:center;color:#ffffff40;text-align:center;padding:30px;pointer-events:none}
+#hand{display:flex;justify-content:center;align-items:flex-end;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--wood);overflow:hidden;border-top:2px solid #7d5733}
+.card{width:var(--w);height:var(--h);border-radius:7px;background:#222;touch-action:none;flex:none;box-shadow:0 2px 6px #0008;overflow:hidden;transition:transform .15s}
+.card img{width:100%;height:100%;display:block;object-fit:cover;object-position:left top;pointer-events:none;border-radius:7px}
+.card .nm{padding:6px;font-size:12px}
+#hand .card{flex:0 1 var(--w);min-width:34px;margin-right:-2px}
+#hand .card:last-child{flex:none}
+#bf .card{position:absolute}
+.card.t{transform:rotate(90deg)}
+.card.drag{position:fixed!important;z-index:50;transition:none;box-shadow:0 10px 24px #000a;transform:scale(1.06)}
+.ov{position:fixed;inset:0;background:#000c;display:none;z-index:100;place-items:center;padding:20px}
+.ov.on{display:grid}
+.ov img{max-height:86vh;max-width:92vw;border-radius:16px}
+.panel{background:#2a1a0e;border:1px solid #7d5733;border-radius:14px;padding:16px;width:min(640px,100%);max-height:88vh;display:flex;flex-direction:column;gap:10px}
+.panel h2{margin:0;font-size:20px;font-weight:400}
+textarea{width:100%;height:220px;background:#160d06;color:var(--ink);border:1px solid #7d5733;border-radius:8px;padding:10px;font:14px ui-monospace,Menlo,monospace;user-select:text;-webkit-user-select:text}
+.row{display:flex;gap:8px;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;overflow:auto}
+.grid img{width:100%;border-radius:6px}
+.grid div{font-size:12px;background:#222;border-radius:6px;padding:6px;aspect-ratio:5/7}
+#msg{font-size:13px;color:var(--gold);min-height:18px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="bar">
+    <button id="bImport">Deck</button>
+    <button id="bNew">New game</button>
+    <button class="z" data-zone="lib" id="zLib">Library<b>0</b></button>
+    <button id="bDraw">Draw</button>
+    <button id="bShuf">Shuffle</button>
+    <button id="bUntap">Untap all</button>
+    <button class="z" data-zone="gy" id="zGy">Graveyard<b>0</b></button>
+    <button class="z" data-zone="ex" id="zEx">Exile<b>0</b></button>
+    <div class="life"><button id="lm">−</button><span id="life">20</span><button id="lp">+</button></div>
+  </div>
+  <div id="bf" data-zone="bf"><div class="hint">Load a deck, then drag cards from your hand onto the table.<br>Tap a card to tap it. Press and hold to zoom.</div></div>
+  <div id="hand" data-zone="hand"></div>
+</div>
+
+<div class="ov" id="zoom"><img id="zimg" alt=""></div>
+
+<div class="ov" id="imp"><div class="panel">
+  <h2>Load a decklist</h2>
+  <textarea id="list" spellcheck="false">4 Lightning Bolt
+4 Goblin Guide
+4 Monastery Swiftspear
+4 Lava Spike
+4 Chain Lightning
+4 Rift Bolt
+4 Eidolon of the Great Revel
+4 Searing Spear
+28 Mountain</textarea>
+  <div id="msg">Paste lines like "4 Lightning Bolt". Sideboard lines are ignored.</div>
+  <div class="row"><button id="go">Load deck</button><button id="cancel">Close</button></div>
+</div></div>
+
+<div class="ov" id="zl"><div class="panel">
+  <h2 id="zt"></h2>
+  <div class="grid" id="zg"></div>
+  <div class="row"><span id="zn" style="flex:1;font-size:13px;color:#cdbb97">Tap a card to return it to your hand.</span><button id="zc">Close</button></div>
+</div></div>
+
+<script>
+const $=s=>document.querySelector(s), CW=96, CH=134;
+let S={lib:[],hand:[],bf:[],gy:[],ex:[],life:20,deck:[]}, uid=0;
+const ZN={lib:'Library',hand:'Hand',bf:'Battlefield',gy:'Graveyard',ex:'Exile'};
+
+const imgOf=c=>{const u=c.image_uris||(c.card_faces&&c.card_faces[0].image_uris);return u?u.normal:''};
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---- Scryfall ---- */
+function parse(t){
+  const out=[];
+  for(const l of t.split('\n')){
+    if(/^(sideboard|maybeboard)/i.test(l.trim()))break;
+    const m=l.trim().match(/^(\d+)x?\s+(.+?)(?:\s+\([A-Za-z0-9]+\).*)?$/);
+    if(m)out.push([+m[1],m[2].split(' // ')[0].trim()]);
+  }
+  return out;
+}
+async function loadDeck(text){
+  const rows=parse(text);
+  if(!rows.length){$('#msg').textContent='No cards found. Use lines like "4 Lightning Bolt".';return false}
+  const names=[...new Set(rows.map(r=>r[0]&&r[1]))], found={}, missing=[];
+  let offline=false;
+  for(let i=0;i<names.length;i+=75){
+    $('#msg').textContent='Fetching cards from Scryfall… '+Math.min(i+75,names.length)+'/'+names.length;
+    try{
+      const r=await fetch('https://api.scryfall.com/cards/collection',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({identifiers:names.slice(i,i+75).map(name=>({name}))})});
+      const j=await r.json();
+      (j.data||[]).forEach(c=>found[c.name.split(' // ')[0].toLowerCase()]={name:c.name,img:imgOf(c)});
+      (j.not_found||[]).forEach(n=>missing.push(n.name));
+    }catch(e){offline=true;break}
+    await sleep(120);
+  }
+  if(offline)names.forEach(n=>{if(!found[n.toLowerCase()])found[n.toLowerCase()]={name:n,img:''}});
+  S.deck=[];
+  rows.forEach(([n,name])=>{const c=found[name.toLowerCase()];if(c)for(let k=0;k<n;k++)S.deck.push(c)});
+  $('#msg').textContent=S.deck.length+' cards loaded.'+(missing.length?' Not found: '+missing.join(', '):'');
+  return S.deck.length>0;
+}
+
+/* ---- game state ---- */
+function newGame(){
+  S.lib=S.deck.map(c=>({id:++uid,name:c.name,img:c.img,x:0,y:0,t:false}));
+  S.hand=[];S.bf=[];S.gy=[];S.ex=[];shuffle(S.lib);
+  for(let i=0;i<7;i++)draw();
+  render();
+}
+function draw(){const c=S.lib.pop();if(c)S.hand.push(c)}
+function find(id){for(const z of ['hand','bf','gy','ex','lib']){const i=S[z].findIndex(c=>c.id===id);if(i>=0)return[z,i]}}
+function move(id,to,x,y){
+  const f=find(id);if(!f)return;
+  const [c]=S[f[0]].splice(f[1],1);
+  c.t=false;
+  if(to==='bf'){c.x=x;c.y=y}
+  S[to].push(c);render();
+}
+
+/* ---- render ---- */
+function cardEl(c,cls){
+  const d=document.createElement('div');
+  d.className='card '+(cls||'')+(c.t?' t':'');d.dataset.id=c.id;
+  if(c.img){const i=document.createElement('img');i.src=c.img;i.alt=c.name;i.draggable=false;d.append(i)}
+  else{d.innerHTML='<div class="nm"></div>';d.firstChild.textContent=c.name}
+  return d;
+}
+function render(){
+  const bf=$('#bf');bf.querySelectorAll('.card').forEach(e=>e.remove());
+  S.bf.forEach(c=>{const e=cardEl(c);e.style.left=c.x+'px';e.style.top=c.y+'px';bf.append(e)});
+  bf.querySelector('.hint').style.display=S.bf.length?'none':'grid';
+  const h=$('#hand');h.innerHTML='';S.hand.forEach(c=>h.append(cardEl(c)));
+  $('#zLib b').textContent=S.lib.length;$('#zGy b').textContent=S.gy.length;$('#zEx b').textContent=S.ex.length;
+  $('#life').textContent=S.life;
+}
+
+/* ---- pointer: tap, long-press zoom, drag ---- */
+let drag=null,timer=null;
+function zoom(id){const f=find(id);if(!f)return;const c=S[f[0]][f[1]];if(!c.img)return;$('#zimg').src=c.img;$('#zoom').classList.add('on')}
+document.addEventListener('pointerdown',e=>{
+  const el=e.target.closest('.card[data-id]');if(!el)return;
+  const id=+el.dataset.id,f=find(id);
+  drag={el,id,zone:f&&f[0],sx:e.clientX,sy:e.clientY,moved:false,long:false};
+  timer=setTimeout(()=>{if(drag&&!drag.moved){drag.long=true;zoom(id)}},450);
+  el.setPointerCapture(e.pointerId);
+});
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>8){
+    drag.moved=true;clearTimeout(timer);
+    drag.el.classList.add('drag');drag.el.style.width=CW+'px';drag.el.style.height=CH+'px';
+  }
+  if(drag.moved){
+    drag.el.style.left=(e.clientX-CW/2)+'px';drag.el.style.top=(e.clientY-CH/2)+'px';
+    const z=zoneAt(e.clientX,e.clientY);
+    document.querySelectorAll('.z').forEach(b=>b.classList.toggle('hl',b.dataset.zone===z));
+  }
+});
+function zoneAt(x,y){const t=document.elementsFromPoint(x,y).find(p=>p.dataset&&p.dataset.zone&&!p.classList.contains('card'));return t&&t.dataset.zone}
+document.addEventListener('pointerup',e=>{
+  if(!drag)return;clearTimeout(timer);
+  const d=drag;drag=null;document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));
+  if(d.moved){
+    const z=zoneAt(e.clientX,e.clientY);
+    if(!z){render();return}
+    if(z==='bf'){
+      const r=$('#bf').getBoundingClientRect();
+      move(d.id,'bf',Math.max(0,Math.min(r.width-CW,e.clientX-CW/2-r.left)),Math.max(0,Math.min(r.height-CH,e.clientY-CH/2-r.top)));
+    }else move(d.id,z);
+  }else if(!d.long){
+    if(d.zone==='bf'){const c=S.bf[S.bf.findIndex(c=>c.id===d.id)];c.t=!c.t;render()}
+    else zoom(d.id);
+  }
+});
+document.addEventListener('pointercancel',()=>{drag=null;clearTimeout(timer);render()});
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+
+/* ---- buttons ---- */
+$('#zoom').onclick=()=>$('#zoom').classList.remove('on');
+$('#bImport').onclick=()=>$('#imp').classList.add('on');
+$('#cancel').onclick=()=>$('#imp').classList.remove('on');
+$('#go').onclick=async()=>{const b=$('#go');b.disabled=true;if(await loadDeck($('#list').value)){$('#imp').classList.remove('on');newGame()}b.disabled=false};
+$('#bNew').onclick=()=>{if(S.deck.length)newGame();else $('#imp').classList.add('on')};
+$('#bDraw').onclick=()=>{draw();render()};
+$('#zLib').onclick=()=>{draw();render()};
+$('#bShuf').onclick=()=>{shuffle(S.lib);render()};
+$('#bUntap').onclick=()=>{S.bf.forEach(c=>c.t=false);render()};
+$('#lm').onclick=()=>{S.life--;render()};
+$('#lp').onclick=()=>{S.life++;render()};
+function openZone(z){
+  $('#zt').textContent=ZN[z]+' ('+S[z].length+')';
+  const g=$('#zg');g.innerHTML='';
+  [...S[z]].reverse().forEach(c=>{
+    const d=document.createElement('div');d.style.padding=0;
+    if(c.img){const i=document.createElement('img');i.src=c.img;i.alt=c.name;d.append(i)}else d.textContent=c.name;
+    d.onclick=()=>{move(c.id,'hand');openZone(z)};
+    g.append(d);
+  });
+  $('#zl').classList.add('on');
+}
+$('#zGy').addEventListener('click',()=>openZone('gy'));
+$('#zEx').addEventListener('click',()=>openZone('ex'));
+$('#zc').onclick=()=>$('#zl').classList.remove('on');
+render();
+</script>
+</body>
+</html>
