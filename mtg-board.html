@@ -41,6 +41,11 @@ textarea{width:100%;height:220px;background:#160d06;color:var(--ink);border:1px 
 .grid img{width:100%;border-radius:6px}
 .grid div{font-size:12px;background:#222;border-radius:6px;padding:6px;aspect-ratio:5/7}
 #msg{font-size:13px;color:var(--gold);min-height:18px}
+#peek{position:fixed;right:14px;top:84px;width:min(300px,32vw);display:none;z-index:40;pointer-events:none}
+#peek.on{display:block}
+#peek img{width:100%;display:block;border-radius:14px;box-shadow:0 12px 30px #000c}
+#peek .nm{background:#222;border-radius:14px;padding:16px;font-size:18px;aspect-ratio:5/7}
+input[type=search]{width:100%;font:16px Georgia,serif;color:var(--ink);background:#160d06;border:1px solid #7d5733;border-radius:8px;padding:11px 12px;min-height:44px;user-select:text;-webkit-user-select:text}
 </style>
 </head>
 <body>
@@ -60,6 +65,7 @@ textarea{width:100%;height:220px;background:#160d06;color:var(--ink);border:1px 
   <div id="hand" data-zone="hand"></div>
 </div>
 
+<div id="peek"></div>
 <div class="ov" id="zoom"><img id="zimg" alt=""></div>
 
 <div class="ov" id="imp"><div class="panel">
@@ -79,8 +85,9 @@ textarea{width:100%;height:220px;background:#160d06;color:var(--ink);border:1px 
 
 <div class="ov" id="zl"><div class="panel">
   <h2 id="zt"></h2>
+  <input type="search" id="zs" placeholder="Search by name" autocomplete="off" autocapitalize="off">
   <div class="grid" id="zg"></div>
-  <div class="row"><span id="zn" style="flex:1;font-size:13px;color:#cdbb97">Tap a card to return it to your hand.</span><button id="zc">Close</button></div>
+  <div class="row"><span id="zn" style="flex:1;font-size:13px;color:#cdbb97"></span><button id="zsh">Shuffle &amp; close</button><button id="zc">Close</button></div>
 </div></div>
 
 <script>
@@ -172,7 +179,7 @@ document.addEventListener('pointermove',e=>{
   if(!drag)return;
   if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>8){
     drag.moved=true;clearTimeout(timer);
-    drag.el.classList.add('drag');drag.el.style.width=CW+'px';drag.el.style.height=CH+'px';
+    drag.el.classList.add('drag');drag.el.style.width=CW+'px';drag.el.style.height=CH+'px';showPeek(drag.id);
   }
   if(drag.moved){
     drag.el.style.left=(e.clientX-CW/2)+'px';drag.el.style.top=(e.clientY-CH/2)+'px';
@@ -183,7 +190,7 @@ document.addEventListener('pointermove',e=>{
 function zoneAt(x,y){const t=document.elementsFromPoint(x,y).find(p=>p.dataset&&p.dataset.zone&&!p.classList.contains('card'));return t&&t.dataset.zone}
 document.addEventListener('pointerup',e=>{
   if(!drag)return;clearTimeout(timer);
-  const d=drag;drag=null;document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));
+  const d=drag;drag=null;hidePeek();document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));
   if(d.moved){
     const z=zoneAt(e.clientX,e.clientY);
     if(!z){render();return}
@@ -196,9 +203,9 @@ document.addEventListener('pointerup',e=>{
     else zoom(d.id);
   }
 });
-document.addEventListener('pointercancel',()=>{drag=null;clearTimeout(timer);render()});
+document.addEventListener('pointercancel',()=>{drag=null;hidePeek();clearTimeout(timer);render()});
 document.addEventListener('contextmenu',e=>e.preventDefault());
-document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove',e=>{if(!e.target.closest('.grid,textarea'))e.preventDefault()},{passive:false});
 
 /* ---- buttons ---- */
 $('#zoom').onclick=()=>$('#zoom').classList.remove('on');
@@ -207,22 +214,40 @@ $('#cancel').onclick=()=>$('#imp').classList.remove('on');
 $('#go').onclick=async()=>{const b=$('#go');b.disabled=true;if(await loadDeck($('#list').value)){$('#imp').classList.remove('on');newGame()}b.disabled=false};
 $('#bNew').onclick=()=>{if(S.deck.length)newGame();else $('#imp').classList.add('on')};
 $('#bDraw').onclick=()=>{draw();render()};
-$('#zLib').onclick=()=>{draw();render()};
+$('#zLib').onclick=()=>openZone('lib');
 $('#bShuf').onclick=()=>{shuffle(S.lib);render()};
 $('#bUntap').onclick=()=>{S.bf.forEach(c=>c.t=false);render()};
 $('#lm').onclick=()=>{S.life--;render()};
 $('#lp').onclick=()=>{S.life++;render()};
-function openZone(z){
-  $('#zt').textContent=ZN[z]+' ('+S[z].length+')';
+let curZone=null;
+function openZone(z){curZone=z;$('#zs').value='';fillZone();$('#zl').classList.add('on')}
+function fillZone(){
+  const z=curZone,q=$('#zs').value.trim().toLowerCase();
+  let list=[...S[z]];
+  list=z==='lib'?list.sort((a,b)=>a.name.localeCompare(b.name)):list.reverse();
+  const shown=list.filter(c=>c.name.toLowerCase().includes(q));
+  $('#zt').textContent=ZN[z]+' ('+(q?shown.length+' of ':'')+S[z].length+')';
+  $('#zn').textContent=z==='lib'?'Sorted A to Z so the order stays secret. Tap a card to add it to your hand.':'Tap a card to return it to your hand.';
+  $('#zsh').style.display=z==='lib'?'':'none';
   const g=$('#zg');g.innerHTML='';
-  [...S[z]].reverse().forEach(c=>{
-    const d=document.createElement('div');d.style.padding=0;
-    if(c.img){const i=document.createElement('img');i.src=c.img;i.alt=c.name;d.append(i)}else d.textContent=c.name;
-    d.onclick=()=>{move(c.id,'hand');openZone(z)};
+  if(!shown.length){g.textContent='No cards found.'}
+  shown.forEach(c=>{
+    const d=document.createElement('div');
+    if(c.img){d.style.padding=0;const i=document.createElement('img');i.src=c.img;i.alt=c.name;d.append(i)}else d.textContent=c.name;
+    d.onclick=()=>{move(c.id,'hand');fillZone()};
     g.append(d);
   });
-  $('#zl').classList.add('on');
 }
+$('#zs').addEventListener('input',fillZone);
+$('#zsh').onclick=()=>{shuffle(S.lib);$('#zl').classList.remove('on');render()};
+function showPeek(id){
+  const f=find(id);if(!f)return;const c=S[f[0]][f[1]],p=$('#peek');
+  p.innerHTML='';
+  if(c.img){const i=document.createElement('img');i.src=c.img;i.alt=c.name;p.append(i)}
+  else{const n=document.createElement('div');n.className='nm';n.textContent=c.name;p.append(n)}
+  p.classList.add('on');
+}
+function hidePeek(){$('#peek').classList.remove('on')}
 $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
