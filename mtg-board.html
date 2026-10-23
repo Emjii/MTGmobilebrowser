@@ -41,7 +41,7 @@ textarea{width:100%;height:220px;background:#160d06;color:var(--ink);border:1px 
 .grid img{width:100%;border-radius:6px}
 .grid div{font-size:12px;background:#222;border-radius:6px;padding:6px;aspect-ratio:5/7}
 #msg{font-size:13px;color:var(--gold);min-height:18px}
-#peek{position:fixed;right:14px;top:84px;width:min(300px,32vw);display:block;opacity:0;visibility:hidden;transition:opacity .6s,visibility .6s;z-index:40;cursor:pointer}
+#peek{position:fixed;right:14px;top:84px;width:min(300px,32vw);display:block;opacity:0;visibility:hidden;transition:opacity .6s,visibility .6s;z-index:120;cursor:pointer}
 #peek.on{opacity:1;visibility:visible;transition:opacity .15s}
 #peek img{width:100%;display:block;border-radius:14px;box-shadow:0 12px 30px #000c}
 #peek .nm{background:#222;border-radius:14px;padding:16px;font-size:18px;aspect-ratio:5/7}
@@ -81,7 +81,16 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 #bf .hint{font-style:italic;font-size:17px;color:#ffffff4d}
 #hand{background:linear-gradient(#3d2716,#2a1a0e);box-shadow:inset 0 6px 14px #0008}
 .card{box-shadow:0 3px 8px #000a,0 0 0 1px #0007}
+.ver{font-size:11px;color:#8d7a5c}
+#pchips{position:absolute;top:6px;left:8px;display:flex;gap:6px;flex-wrap:wrap;z-index:3}
+.chip{padding:4px 12px;min-height:30px;font-size:13px;border-radius:15px}
+#owrap{overflow:hidden;flex:none}
+#obf{position:relative;background:radial-gradient(ellipse at 50% 35%,#1d4a3c,#14352c 45%,#0b1f19);border-radius:10px}
+#obf .card{position:absolute}
+#ol{display:flex;flex-wrap:wrap;gap:8px;min-height:20px}
+#ol .card{position:relative}
 </style>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -94,9 +103,10 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
     <button class="z" data-zone="gy" id="zGy">Graveyard<b>0</b></button>
     <button class="z" data-zone="ex" id="zEx">Exile<b>0</b></button>
     <button class="z" data-zone="cmd" id="zCmd">Command<b>0</b></button>
+    <button id="bNet">Online</button>
     <div class="life"><button id="lm">−</button><span id="life">20</span><button id="lp">+</button></div>
   </div>
-  <div id="bf" data-zone="bf"><div class="hint">Load a deck, then drag cards from your hand onto the table. Lands go to the strip below.<br>Double-tap a card to tap it. Tap once to preview, press and hold to zoom.</div></div>
+  <div id="bf" data-zone="bf"><div id="pchips"></div><div class="hint">Load a deck, then drag cards from your hand onto the table. Lands go to the strip below.<br>Double-tap a card to tap it. Tap once to preview, press and hold to zoom.</div></div>
   <div id="lands" data-zone="land"><div id="manabox"><div class="lbl">Lands</div><div id="mana"><b>0</b>mana</div><div id="pips"></div></div><div id="lcards"></div></div>
   <div id="hand" data-zone="hand"></div>
 </div>
@@ -116,7 +126,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 4 Searing Spear
 28 Mountain</textarea>
   <div id="msg">Paste a decklist or a Moxfield deck link. Sideboard lines are ignored.</div>
-  <div style="font-size:11px;color:#8d7a5c">Build: Oct 23, image fallback. If you do not see this line, reload the page.</div>
+  <div class="ver"></div>
   <div class="row"><button id="go">Load deck</button><button id="restart">Restart game</button><button id="cancel">Close</button></div>
 </div></div>
 
@@ -125,6 +135,25 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
   <div id="cnr"></div>
   <div class="row"><input type="search" id="cni" placeholder="Custom counter name" autocomplete="off" autocapitalize="off"><button id="cna">Add</button></div>
   <div class="row"><button id="cnd">Done</button></div>
+</div></div>
+
+<div class="ov" id="net"><div class="panel">
+  <h2>Play online</h2>
+  <input type="search" id="nname" placeholder="Your name" autocomplete="off">
+  <div class="row"><button id="nhost">Create room</button></div>
+  <div class="row"><input type="search" id="ncode" placeholder="Room code" autocapitalize="characters" autocomplete="off"><button id="njoin">Join</button></div>
+  <div id="nstat" style="font-size:14px;color:var(--gold);min-height:20px">Your hand and library stay private. Friends only see your table.</div>
+  <div class="ver"></div>
+  <div class="row"><button id="nleave">Leave room</button><button id="nclose">Close</button></div>
+</div></div>
+
+<div class="ov" id="opp"><div class="panel" style="width:min(1100px,100%)">
+  <h2 id="oh"></h2>
+  <div id="owrap"><div id="obf"></div></div>
+  <div id="ol"></div>
+  <div class="row" id="ozb"></div>
+  <div class="grid" id="oz" style="max-height:130px"></div>
+  <div class="row"><button id="oclose">Close</button></div>
 </div></div>
 
 <div class="ov" id="zl"><div class="panel">
@@ -266,7 +295,7 @@ function render(){
   }
   const h=$('#hand');h.innerHTML='';S.hand.forEach(c=>h.append(cardEl(c)));
   $('#zLib b').textContent=S.lib.length;$('#zGy b').textContent=S.gy.length;$('#zEx b').textContent=S.ex.length;$('#zCmd b').textContent=S.cmd.length;
-  $('#life').textContent=S.life;
+  $('#life').textContent=S.life;queueSync();
 }
 
 /* ---- pointer: tap, long-press zoom, drag ---- */
@@ -448,6 +477,117 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
+const BUILD='Build: Oct 23, multiplayer v1';
+document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
+
+/* ---- multiplayer (PeerJS, host relays) ---- */
+let NET={peer:null,id:'',conns:[],host:false,code:'',name:'',players:{}},st=null,oppId=null,ozone=null;
+const status=t=>{$('#nstat').textContent=t};
+const cs=c=>({n:c.name,i:c.img,p:curPT(c),t:c.t?1:0,cn:c.cn||{},k:c.token?1:0,x:c.x,y:c.y});
+const zs=a=>a.map(c=>({n:c.name,i:c.img}));
+function mySnap(){const r=$('#bf').getBoundingClientRect();return{name:NET.name,life:S.life,w:r.width,h:r.height,hand:S.hand.length,lib:S.lib.length,bf:S.bf.map(cs),land:S.land.map(cs),gy:zs(S.gy),ex:zs(S.ex),cmd:zs(S.cmd)}}
+function sync(){if(!NET.id)return;const m={t:'snap',id:NET.id,snap:mySnap()};NET.conns.forEach(c=>c.open&&c.send(m))}
+function queueSync(){if(!NET.id)return;clearTimeout(st);st=setTimeout(sync,200)}
+function gotPlayers(){renderPlayers();if($('#opp').classList.contains('on'))fillOpp()}
+function onMsg(m,c){
+  if(m.t==='snap'){
+    if(NET.host){c.pid=m.id;NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m))}
+    NET.players[m.id]=m.snap;gotPlayers();
+  }else if(m.t==='all'){Object.assign(NET.players,m.players);delete NET.players[NET.id];gotPlayers()}
+  else if(m.t==='bye'){delete NET.players[m.id];gotPlayers()}
+}
+function drop(c){
+  NET.conns=NET.conns.filter(x=>x!==c);
+  if(c.pid){delete NET.players[c.pid];NET.conns.forEach(x=>x.open&&x.send({t:'bye',id:c.pid}));gotPlayers()}
+}
+function startNet(){
+  if(typeof Peer==='undefined'){status('The online library did not load. Check your connection and reload.');return false}
+  leave(true);NET.name=$('#nname').value.trim()||'Player';return true;
+}
+function hostRoom(){
+  if(!startNet())return;
+  NET.host=true;NET.code=Math.random().toString(36).slice(2,7).toUpperCase();
+  const pr=NET.peer=new Peer('mtgtab-'+NET.code);
+  pr.on('open',id=>{NET.id=id;$('#bNet').textContent='Room '+NET.code;status('Room '+NET.code+' is open. Tell your friends this code.')});
+  pr.on('connection',c=>{
+    c.on('open',()=>{NET.conns.push(c);c.send({t:'all',players:{...NET.players,[NET.id]:mySnap()}})});
+    c.on('data',m=>onMsg(m,c));c.on('close',()=>drop(c));
+  });
+  pr.on('error',e=>status('Network problem: '+e.type));
+}
+function joinRoom(){
+  const code=$('#ncode').value.trim().toUpperCase();
+  if(!code){status('Type the room code first.');return}
+  if(!startNet())return;
+  NET.host=false;NET.code=code;
+  const pr=NET.peer=new Peer();
+  pr.on('open',id=>{
+    NET.id=id;status('Joining room '+code+'…');
+    const c=pr.connect('mtgtab-'+code,{reliable:true});NET.conns=[c];
+    c.on('open',()=>{$('#bNet').textContent='Room '+code;status('Connected to room '+code+'.');sync()});
+    c.on('data',m=>onMsg(m,c));
+    c.on('close',()=>{NET.players={};gotPlayers();status('The host left the room.');$('#bNet').textContent='Online'});
+  });
+  pr.on('error',e=>status(e.type==='peer-unavailable'?'No room with that code.':'Network problem: '+e.type));
+}
+function leave(quiet){
+  if(NET.peer)try{NET.peer.destroy()}catch(e){}
+  NET={peer:null,id:'',conns:[],host:false,code:'',name:'',players:{}};
+  gotPlayers();$('#bNet').textContent='Online';if(!quiet)status('You left the room.');
+}
+function renderPlayers(){
+  const b=$('#pchips');b.innerHTML='';
+  Object.entries(NET.players).forEach(([id,p])=>b.append(mkb(p.name+'  '+p.life+' life · '+p.hand+' in hand',()=>{oppId=id;ozone=null;fillOpp();$('#opp').classList.add('on')})));
+  b.querySelectorAll('button').forEach(x=>x.classList.add('chip'));
+}
+function mini(c,cls){
+  const d=document.createElement('div');d.className='card '+(cls||'')+(c.t?' t':'')+(c.k?' tok':'');
+  if(c.i){const i=document.createElement('img');i.src=c.i;i.alt=c.n;i.draggable=false;d.append(i)}
+  else{d.innerHTML='<div class="nm"></div>';d.firstChild.textContent=c.n}
+  d.onclick=()=>peekRaw(c.i,c.n);return d;
+}
+function peekRaw(img,name){
+  const p=$('#peek');p.innerHTML='';
+  if(img){const i=document.createElement('img');i.src=img;i.alt=name;p.append(i)}
+  else{const n=document.createElement('div');n.className='nm';n.textContent=name;p.append(n)}
+  p.classList.add('on');clearTimeout(pk);pk=setTimeout(hidePeek,3000);
+}
+function fillOpp(){
+  const p=NET.players[oppId];
+  if(!p){$('#opp').classList.remove('on');return}
+  $('#oh').textContent=p.name+' · '+p.life+' life · '+p.hand+' in hand · '+p.lib+' in library';
+  const sc=Math.min(1,(Math.min(1100,innerWidth)-48)/p.w,(innerHeight-340)/p.h);
+  const w=$('#owrap'),bx=$('#obf');bx.innerHTML='';
+  w.style.width=(p.w*sc)+'px';w.style.height=(p.h*sc)+'px';
+  bx.style.width=p.w+'px';bx.style.height=p.h+'px';bx.style.transform='scale('+sc+')';bx.style.transformOrigin='top left';
+  p.bf.forEach(c=>{
+    const e=mini(c);e.style.left=c.x+'px';e.style.top=c.y+'px';bx.append(e);
+    const cn=Object.entries(c.cn||{});
+    if(c.p||cn.length){
+      const t=document.createElement('div');t.className='pt';t.style.left=c.x+'px';t.style.top=(c.y+CH+2)+'px';
+      if(c.p){const sp=document.createElement('span');sp.textContent=c.p;t.append(sp)}
+      cn.forEach(([n,v])=>{const i=document.createElement('i');i.textContent=n+' ×'+v;t.append(i)});bx.append(t);
+    }
+  });
+  const L=$('#ol');L.innerHTML='';p.land.forEach(c=>L.append(mini(c,'sm')));
+  const zb=$('#ozb');zb.innerHTML='';
+  [['gy','Graveyard'],['ex','Exile'],['cmd','Command']].forEach(([k,n])=>zb.append(mkb(n+' ('+(p[k]||[]).length+')',()=>{ozone=k;fillOz()})));
+  fillOz();
+}
+function fillOz(){
+  const g=$('#oz');g.innerHTML='';const p=NET.players[oppId];
+  if(!p||!ozone)return;
+  [...(p[ozone]||[])].reverse().forEach(c=>{
+    const d=document.createElement('div');
+    if(c.i){d.style.padding=0;const i=document.createElement('img');i.src=c.i;i.alt=c.n;d.append(i)}else d.textContent=c.n;
+    d.onclick=()=>peekRaw(c.i,c.n);g.append(d);
+  });
+}
+$('#bNet').onclick=()=>$('#net').classList.add('on');
+$('#nclose').onclick=()=>$('#net').classList.remove('on');
+$('#nhost').onclick=hostRoom;$('#njoin').onclick=joinRoom;$('#nleave').onclick=()=>leave();
+$('#oclose').onclick=()=>$('#opp').classList.remove('on');
+
 addEventListener('resize',render);
 render();
 </script>
