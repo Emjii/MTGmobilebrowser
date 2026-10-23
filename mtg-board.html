@@ -41,8 +41,8 @@ textarea{width:100%;height:220px;background:#160d06;color:var(--ink);border:1px 
 .grid img{width:100%;border-radius:6px}
 .grid div{font-size:12px;background:#222;border-radius:6px;padding:6px;aspect-ratio:5/7}
 #msg{font-size:13px;color:var(--gold);min-height:18px}
-#peek{position:fixed;right:14px;top:84px;width:min(300px,32vw);display:none;z-index:40;cursor:pointer}
-#peek.on{display:block}
+#peek{position:fixed;right:14px;top:84px;width:min(300px,32vw);display:block;opacity:0;visibility:hidden;transition:opacity .6s,visibility .6s;z-index:40;cursor:pointer}
+#peek.on{opacity:1;visibility:visible;transition:opacity .15s}
 #peek img{width:100%;display:block;border-radius:14px;box-shadow:0 12px 30px #000c}
 #peek .nm{background:#222;border-radius:14px;padding:16px;font-size:18px;aspect-ratio:5/7}
 input[type=search]{width:100%;font:16px Georgia,serif;color:var(--ink);background:#160d06;border:1px solid #7d5733;border-radius:8px;padding:11px 12px;min-height:44px;user-select:text;-webkit-user-select:text}
@@ -135,6 +135,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 
 <script>
 const $=s=>document.querySelector(s), CW=96, CH=134;
+let lastMissing=[];
 let S={lib:[],hand:[],bf:[],gy:[],ex:[],cmd:[],land:[],life:20,deck:[]}, uid=0;
 const ZN={lib:'Library',hand:'Hand',bf:'Battlefield',gy:'Graveyard',ex:'Exile',cmd:'Command',land:'Lands'};
 
@@ -154,14 +155,14 @@ function parse(t){
     if(/^commanders?:?$/i.test(w)){cm=true;continue}
     if(!w||/^(deck|mainboard|main|companion):?$/i.test(w)){cm=false;continue}
     const m=l.trim().match(/^(\d+)x?\s+(.+?)(?:\s+\([A-Za-z0-9]+\).*)?$/);
-    if(m)out.push([+m[1],m[2].split(' // ')[0].trim(),cm]);
+    if(m)out.push([+m[1],m[2].replace(/\s+\/{1,2}\s+/g,' // ').trim(),cm]);
   }
   return out;
 }
 async function loadDeck(text){
   const rows=parse(text);
   if(!rows.length){$('#msg').textContent='No cards found. Use lines like "4 Lightning Bolt".';return false}
-  const names=[...new Set(rows.map(r=>r[0]&&r[1]))], found={}, missing=[];
+  const names=[...new Set(rows.map(r=>r[1]))], found={}, missing=[];
   let offline=false;
   for(let i=0;i<names.length;i+=75){
     $('#msg').textContent='Fetching cards from Scryfall… '+Math.min(i+75,names.length)+'/'+names.length;
@@ -173,10 +174,11 @@ async function loadDeck(text){
     }catch(e){offline=true;break}
     await sleep(120);
   }
-  if(offline)names.forEach(n=>{if(!found[n.toLowerCase()])found[n.toLowerCase()]={name:n,img:'',land:!!BASIC[n],mana:BASIC[n]?[BASIC[n]]:[]}});
+  if(offline)names.forEach(n=>{if(!found[n.split(' // ')[0].toLowerCase()])found[n.split(' // ')[0].toLowerCase()]={name:n,img:'',land:!!BASIC[n],mana:BASIC[n]?[BASIC[n]]:[]}});
   S.deck=[];
-  rows.forEach(([n,name,cm])=>{const c=found[name.toLowerCase()];if(c)for(let k=0;k<n;k++)S.deck.push(cm?{...c,cmd:true}:c)});
-  $('#msg').textContent=S.deck.length+' cards loaded.'+(missing.length?' Not found: '+missing.join(', '):'');
+  lastMissing=[];
+  rows.forEach(([n,name,cm])=>{const c=found[name.split(' // ')[0].toLowerCase()];if(c){for(let k=0;k<n;k++)S.deck.push(cm?{...c,cmd:true}:c)}else if(!lastMissing.includes(name))lastMissing.push(name)});
+  $('#msg').textContent=S.deck.length+' of '+rows.reduce((a,r)=>a+r[0],0)+' cards loaded.'+(lastMissing.length?' Not found: '+lastMissing.join(', ')+'. Check the spelling, or remove the set code.':'');
   return S.deck.length>0;
 }
 
@@ -256,7 +258,7 @@ document.addEventListener('pointermove',e=>{
   if(!drag)return;
   if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>8){
     drag.moved=true;clearTimeout(timer);
-    drag.el.classList.add('drag');drag.el.style.width=CW+'px';drag.el.style.height=CH+'px';showPeek(drag.id);document.querySelectorAll('[data-for="'+drag.id+'"]').forEach(e=>e.style.display='none');
+    drag.el.classList.add('drag');drag.el.style.width=CW+'px';drag.el.style.height=CH+'px';showPeek(drag.id,true);document.querySelectorAll('[data-for="'+drag.id+'"]').forEach(e=>e.style.display='none');
   }
   if(drag.moved){
     drag.el.style.left=(e.clientX-CW/2)+'px';drag.el.style.top=(e.clientY-CH/2)+'px';
@@ -270,6 +272,7 @@ document.addEventListener('pointerup',e=>{
   if(!drag)return;clearTimeout(timer);
   const d=drag;drag=null;document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));$('#lands').classList.remove('hl');
   if(d.moved){
+    clearTimeout(pk);pk=setTimeout(hidePeek,3000);
     let z=zoneAt(e.clientX,e.clientY);
     if(!z){render();return}
     const fc=find(d.id),cd=fc&&S[fc[0]][fc[1]];
@@ -307,7 +310,7 @@ $('#go').onclick=async()=>{
     if(!t){$('#msg').textContent='Could not load that link (Moxfield can block browsers). On Moxfield tap Export, copy the text list, and paste it here.';b.disabled=false;return}
     txt=t;$('#list').value=t;
   }
-  if(await loadDeck(txt)){$('#imp').classList.remove('on');newGame()}b.disabled=false};
+  if(await loadDeck(txt)){if(!lastMissing.length)$('#imp').classList.remove('on');newGame()}b.disabled=false};
 $('#restart').onclick=()=>{if(S.deck.length){newGame();$('#imp').classList.remove('on')}else $('#msg').textContent='Load a deck first.'};
 $('#bDraw').onclick=()=>{draw();render()};
 $('#zLib').onclick=()=>openZone('lib');
@@ -336,14 +339,15 @@ function fillZone(){
 }
 $('#zs').addEventListener('input',fillZone);
 $('#zsh').onclick=()=>{shuffle(S.lib);$('#zl').classList.remove('on');render()};
-function showPeek(id){
+let pk=null;
+function showPeek(id,hold){
   const f=find(id);if(!f)return;const c=S[f[0]][f[1]],p=$('#peek');
   p.innerHTML='';
   if(c.img){const i=document.createElement('img');i.src=c.img;i.alt=c.name;p.append(i)}
   else{const n=document.createElement('div');n.className='nm';n.textContent=c.name;p.append(n)}
-  p.classList.add('on');
+  p.classList.add('on');clearTimeout(pk);if(!hold)pk=setTimeout(hidePeek,3000);
 }
-function hidePeek(){$('#peek').classList.remove('on')}
+function hidePeek(){clearTimeout(pk);$('#peek').classList.remove('on')}
 $('#peek').onclick=hidePeek;
 function curPT(c){
   const m=(c.pt||'').match(/^(-?\d+)\/(-?\d+)$/);if(!m)return c.pt||'';
@@ -371,7 +375,7 @@ const tm=document.createElement('div');tm.id='tokmenu';document.body.append(tm);
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('#tokmenu,.more'))tm.style.display='none'});
 let shownId=0,mt=null;
 function syncMore(){document.querySelectorAll('.more').forEach(b=>b.classList.toggle('on',+b.dataset.for===shownId))}
-function showMore(id){shownId=id;clearTimeout(mt);mt=setTimeout(()=>{shownId=0;syncMore()},5000);syncMore()}
+function showMore(id){shownId=id;clearTimeout(mt);mt=setTimeout(()=>{shownId=0;syncMore()},2000);syncMore()}
 function place(btn){const r=btn.getBoundingClientRect();tm.style.display='flex';tm.style.left=Math.max(8,Math.min(r.right-180,innerWidth-200))+'px';tm.style.top=(r.bottom+4)+'px'}
 function cardMenu(c,btn){
   tm.innerHTML='';
