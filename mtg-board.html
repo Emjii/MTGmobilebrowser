@@ -116,7 +116,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 4 Searing Spear
 28 Mountain</textarea>
   <div id="msg">Paste a decklist or a Moxfield deck link. Sideboard lines are ignored.</div>
-  <div style="font-size:11px;color:#8d7a5c">Build: Oct 23, split-card lookup fix. If you do not see this line, reload the page.</div>
+  <div style="font-size:11px;color:#8d7a5c">Build: Oct 23, image fallback. If you do not see this line, reload the page.</div>
   <div class="row"><button id="go">Load deck</button><button id="restart">Restart game</button><button id="cancel">Close</button></div>
 </div></div>
 
@@ -143,7 +143,7 @@ const ZN={lib:'Library',hand:'Hand',bf:'Battlefield',gy:'Graveyard',ex:'Exile',c
 const ptOf=c=>{const f=c.power!=null?c:(c.card_faces&&c.card_faces[0]);return f&&f.power!=null?f.power+'/'+f.toughness:''};
 const tokensOf=c=>{const seen={};return (c.all_parts||[]).filter(p=>p.component==='token'&&!seen[p.name]&&(seen[p.name]=1)).map(p=>({id:p.id,name:p.name}))};
 const facesOf=c=>{const f=c.card_faces;return f&&f.length>1&&f[0].image_uris&&f[1].image_uris?f.map(x=>({name:x.name,img:x.image_uris.normal,pt:x.power!=null?x.power+'/'+x.toughness:'',land:/\bLand\b/.test((x.type_line||'').split(' // ')[0])})):null};
-const entry=c=>({name:c.name,img:imgOf(c),pt:ptOf(c),tokens:tokensOf(c),land:/\bLand\b/.test((c.type_line||(c.card_faces&&c.card_faces[0].type_line)||'').split(' // ')[0]),mana:c.produced_mana||[],faces:facesOf(c)});
+const entry=c=>({name:c.name,img:imgOf(c)||(c.id?'https://api.scryfall.com/cards/'+c.id+'?format=image&version=normal':''),pt:ptOf(c),tokens:tokensOf(c),land:/\bLand\b/.test((c.type_line||(c.card_faces&&c.card_faces[0].type_line)||'').split(' // ')[0]),mana:c.produced_mana||[],faces:facesOf(c)});
 const BASIC={Plains:'W',Island:'U',Swamp:'B',Mountain:'R',Forest:'G'};
 const imgOf=c=>{const u=c.image_uris||(c.card_faces&&c.card_faces[0].image_uris);return u?u.normal:''};
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}};
@@ -189,11 +189,11 @@ async function loadDeck(text){
       await sleep(120);
     }
   }
-  if(offline)names.forEach(n=>{if(!found[n.split(' // ')[0].toLowerCase()])found[n.split(' // ')[0].toLowerCase()]={name:n,img:'',land:!!BASIC[n],mana:BASIC[n]?[BASIC[n]]:[]}});
+  if(offline)names.forEach(n=>{if(!found[n.split(' // ')[0].toLowerCase()])found[n.split(' // ')[0].toLowerCase()]={name:n,img:'https://api.scryfall.com/cards/named?fuzzy='+encodeURIComponent(n.replace(' // ',' '))+'&format=image&version=normal',land:!!BASIC[n],mana:BASIC[n]?[BASIC[n]]:[]}});
   S.deck=[];
   lastMissing=[];
   rows.forEach(([n,name,cm])=>{const c=found[name.split(' // ')[0].toLowerCase()];if(c){for(let k=0;k<n;k++)S.deck.push(cm?{...c,cmd:true}:c)}else if(!lastMissing.includes(name))lastMissing.push(name)});
-  $('#msg').textContent=S.deck.length+' of '+rows.reduce((a,r)=>a+r[0],0)+' cards loaded.'+(lastMissing.length?' Not found: '+lastMissing.join(', ')+'. Check the spelling, or remove the set code.':'');
+  $('#msg').textContent=S.deck.length+' of '+rows.reduce((a,r)=>a+r[0],0)+' cards loaded.'+(lastMissing.length?' Not found: '+lastMissing.join(', ')+'. Check the spelling, or remove the set code.':'')+(S.deck.some(c=>!c.img)?' No image for: '+[...new Set(S.deck.filter(c=>!c.img).map(c=>c.name))].join(', ')+'.':'');
   return S.deck.length>0;
 }
 
