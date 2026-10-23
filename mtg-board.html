@@ -116,6 +116,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 4 Searing Spear
 28 Mountain</textarea>
   <div id="msg">Paste a decklist or a Moxfield deck link. Sideboard lines are ignored.</div>
+  <div style="font-size:11px;color:#8d7a5c">Build: Oct 23, split-card lookup fix. If you do not see this line, reload the page.</div>
   <div class="row"><button id="go">Load deck</button><button id="restart">Restart game</button><button id="cancel">Close</button></div>
 </div></div>
 
@@ -141,6 +142,8 @@ const ZN={lib:'Library',hand:'Hand',bf:'Battlefield',gy:'Graveyard',ex:'Exile',c
 
 const ptOf=c=>{const f=c.power!=null?c:(c.card_faces&&c.card_faces[0]);return f&&f.power!=null?f.power+'/'+f.toughness:''};
 const tokensOf=c=>{const seen={};return (c.all_parts||[]).filter(p=>p.component==='token'&&!seen[p.name]&&(seen[p.name]=1)).map(p=>({id:p.id,name:p.name}))};
+const facesOf=c=>{const f=c.card_faces;return f&&f.length>1&&f[0].image_uris&&f[1].image_uris?f.map(x=>({name:x.name,img:x.image_uris.normal,pt:x.power!=null?x.power+'/'+x.toughness:'',land:/\bLand\b/.test((x.type_line||'').split(' // ')[0])})):null};
+const entry=c=>({name:c.name,img:imgOf(c),pt:ptOf(c),tokens:tokensOf(c),land:/\bLand\b/.test((c.type_line||(c.card_faces&&c.card_faces[0].type_line)||'').split(' // ')[0]),mana:c.produced_mana||[],faces:facesOf(c)});
 const BASIC={Plains:'W',Island:'U',Swamp:'B',Mountain:'R',Forest:'G'};
 const imgOf=c=>{const u=c.image_uris||(c.card_faces&&c.card_faces[0].image_uris);return u?u.normal:''};
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}};
@@ -169,10 +172,22 @@ async function loadDeck(text){
     try{
       const r=await fetch('https://api.scryfall.com/cards/collection',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({identifiers:names.slice(i,i+75).map(name=>({name}))})});
       const j=await r.json();
-      (j.data||[]).forEach(c=>found[c.name.split(' // ')[0].toLowerCase()]={name:c.name,img:imgOf(c),pt:ptOf(c),tokens:tokensOf(c),land:/\bLand\b/.test((c.type_line||(c.card_faces&&c.card_faces[0].type_line)||'').split(' // ')[0]),mana:c.produced_mana||[]});
+      (j.data||[]).forEach(c=>found[c.name.split(' // ')[0].toLowerCase()]=entry(c));
       (j.not_found||[]).forEach(n=>missing.push(n.name));
     }catch(e){offline=true;break}
     await sleep(120);
+  }
+  if(!offline){
+    const miss=names.filter(n=>!found[n.split(' // ')[0].toLowerCase()]).slice(0,25);
+    for(const n of miss){
+      $('#msg').textContent='Looking up '+n+'…';
+      try{
+        const r=await fetch('https://api.scryfall.com/cards/named?fuzzy='+encodeURIComponent(n.replace(' // ',' ')));
+        const c=await r.json();
+        if(c.object==='card')found[n.split(' // ')[0].toLowerCase()]=entry(c);
+      }catch(e){}
+      await sleep(120);
+    }
   }
   if(offline)names.forEach(n=>{if(!found[n.split(' // ')[0].toLowerCase()])found[n.split(' // ')[0].toLowerCase()]={name:n,img:'',land:!!BASIC[n],mana:BASIC[n]?[BASIC[n]]:[]}});
   S.deck=[];
@@ -184,7 +199,7 @@ async function loadDeck(text){
 
 /* ---- game state ---- */
 function newGame(){
-  const all=S.deck.map(c=>({id:++uid,name:c.name,img:c.img,pt:c.pt||'',tokens:c.tokens||[],cn:{},x:0,y:0,t:false,cmd:!!c.cmd,land:!!c.land,mana:c.mana||[]}));
+  const all=S.deck.map(c=>({id:++uid,name:c.name,img:c.img,pt:c.pt||'',tokens:c.tokens||[],cn:{},x:0,y:0,t:false,cmd:!!c.cmd,land:!!c.land,mana:c.mana||[],faces:c.faces||null,face:0}));
   S.lib=all.filter(c=>!c.cmd);S.cmd=all.filter(c=>c.cmd);
   S.hand=[];S.bf=[];S.land=[];S.gy=[];S.ex=[];shuffle(S.lib);
   for(let i=0;i<7;i++)draw();
@@ -192,11 +207,21 @@ function newGame(){
 }
 function draw(){const c=S.lib.pop();if(c)S.hand.push(c)}
 function find(id){for(const z of ['hand','bf','land','gy','ex','cmd','lib']){const i=S[z].findIndex(c=>c.id===id);if(i>=0)return[z,i]}}
+function resetFace(c){if(c.faces&&c.face){c.face=0;const f=c.faces[0];c.img=f.img;c.pt=f.pt;c.name=f.name;c.land=f.land}}
+function flip(c){
+  if(!c.faces)return;
+  c.face=c.face?0:1;const f=c.faces[c.face];c.img=f.img;c.pt=f.pt;c.name=f.name;c.land=f.land;
+  const z=find(c.id);
+  if(z&&c.land&&z[0]==='bf')move(c.id,'land');
+  else if(z&&!c.land&&z[0]==='land')move(c.id,'bf',24,48);
+  else render();
+  if($('#peek').classList.contains('on'))showPeek(c.id);
+}
 function move(id,to,x,y){
   const f=find(id);if(!f)return;
   const [c]=S[f[0]].splice(f[1],1);
   c.t=false;
-  if(to!=='bf'&&to!=='land')c.cn={};
+  if(to!=='bf'&&to!=='land'){c.cn={};resetFace(c)}
   if(c.token&&to!=='bf'&&to!=='land'){render();return}
   if(to==='bf'){c.x=x;c.y=y}
   S[to].push(c);render();
@@ -381,6 +406,7 @@ function cardMenu(c,btn){
   tm.innerHTML='';
   const add=(t,f,cls)=>{const b=mkb(t,()=>{tm.style.display='none';f()});if(cls)b.className=cls;tm.append(b)};
   add('Duplicate',()=>dup(c));
+  if(c.faces)add('Transform',()=>flip(c));
   if(c.tokens&&c.tokens.length)add('Add Token',()=>{
     if(c.tokens.length===1)return summon(c,c.tokens[0]);
     tm.innerHTML='';c.tokens.forEach(t=>tm.append(mkb(t.name,()=>{tm.style.display='none';summon(c,t)})));place(btn);
