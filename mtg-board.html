@@ -14,8 +14,8 @@ html,body{touch-action:manipulation;margin:0;height:100%;overflow:hidden;overscr
 #bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--wood);flex-wrap:wrap}
 button{font:inherit;color:var(--ink);background:#5a3b22;border:1px solid #7d5733;border-radius:8px;padding:9px 14px;min-height:44px;touch-action:manipulation}
 button:active{background:#7d5733}
-button.z{min-width:92px;text-align:left}
-button.z b{display:block;color:var(--gold);font-size:18px;line-height:1}
+button.z{position:relative}
+button.z b{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;background:#000d;border:1px solid #7d5733;color:var(--gold);font-size:12px;line-height:18px;text-align:center;font-weight:400}
 .life{display:flex;align-items:center;gap:6px;margin-left:auto}
 .life span{font-size:28px;min-width:48px;text-align:center;color:var(--gold)}
 .hl{outline:3px solid var(--gold);outline-offset:-3px}
@@ -89,6 +89,22 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 #obf .card{position:absolute}
 #ol{display:flex;flex-wrap:wrap;gap:8px;min-height:20px}
 #ol .card{position:relative}
+#world{transform-origin:0 0;position:absolute;left:0;top:0;width:100%;height:100%;will-change:transform}
+#mine{position:absolute;left:0;top:0;width:100%;height:100%;outline:2px solid #ffffff14;outline-offset:-2px;border-radius:12px}
+.ofield{position:absolute;overflow:hidden;border-radius:14px;border:2px solid #ffffff18;background:radial-gradient(ellipse at 50% 40%,#17412f,#0f2c22 60%,#0a1d16)}
+.olayer{position:absolute;left:0;top:0}
+.olabel{position:absolute;left:50%;top:48%;font-size:44px;color:#ffffff26;white-space:nowrap;pointer-events:none}
+.card.xs{width:44px;height:62px}
+#chat{position:fixed;top:8px;right:8px;width:min(340px,86vw);height:min(400px,48vh);z-index:130;display:flex;flex-direction:column;gap:8px;padding:10px;background:#2a1a0ef2;border:1px solid #7d5733;border-radius:14px;box-shadow:0 10px 30px #000a;opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .2s,transform .2s,visibility .2s}
+#chat.on{opacity:1;visibility:visible;transform:none}
+#cmsgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;touch-action:pan-y}
+.msg{max-width:85%;padding:6px 10px;border-radius:12px;background:#3d2a18;font-size:14px;word-break:break-word;user-select:text;-webkit-user-select:text}
+.msg b{display:block;font-size:11px;color:var(--gold);font-weight:400}
+.msg.me{align-self:flex-end;background:#5a4220}
+.msg.sys{align-self:center;background:none;font-style:italic;color:#cdbb97;font-size:12px}
+#bar>button{min-width:44px;padding:8px 10px;display:inline-flex;align-items:center;justify-content:center}
+#bar{gap:10px}
+#netc,#chatN{font-size:12px;color:var(--gold);margin-left:4px}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
@@ -96,17 +112,18 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 <div id="app">
   <div id="bar">
     <button id="bImport" aria-label="Import deck" title="Import deck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 17v3h16v-3"/></svg></button>
-    <button class="z" data-zone="lib" id="zLib">Library<b>0</b></button>
-    <button id="bDraw">Draw</button>
-    <button id="bShuf">Shuffle</button>
-    <button id="bUntap">Untap all</button>
-    <button class="z" data-zone="gy" id="zGy">Graveyard<b>0</b></button>
-    <button class="z" data-zone="ex" id="zEx">Exile<b>0</b></button>
-    <button class="z" data-zone="cmd" id="zCmd">Command<b>0</b></button>
-    <button id="bNet">Online</button>
+    <button class="z" data-zone="lib" id="zLib" aria-label="Library" title="Library"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-13c-3-.5-6 0-8 1.5z"/><path d="M12 6v13"/></svg><b>0</b></button>
+    <button id="bDraw" aria-label="Draw a card" title="Draw a card"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="1.5" width="8" height="11" rx="1.3" transform="rotate(-12 6 7)"/><g transform="translate(4.5 5.5) scale(.72)" stroke-width="2.6"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></g></svg></button>
+    <button id="bShuf" aria-label="Shuffle library" title="Shuffle library"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg></button>
+    <button id="bUntap" aria-label="Untap all" title="Untap all"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+    <button class="z" data-zone="gy" id="zGy" aria-label="Graveyard" title="Graveyard"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V9a6 6 0 0 1 12 0v12z"/><path d="M12 8v6M9.5 10.5h5"/><path d="M3 21h18"/></svg><b>0</b></button>
+    <button class="z" data-zone="ex" id="zEx" aria-label="Exile" title="Exile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="5.5" ry="9.5"/><ellipse cx="12" cy="12" rx="2" ry="5"/><path d="M3 12h2M19 12h2"/></svg><b>0</b></button>
+    <button class="z" data-zone="cmd" id="zCmd" aria-label="Command zone" title="Command zone"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18"/><path d="M6 3v17l6-4 6 4V3"/></svg><b>0</b></button>
+    <button id="bNet" aria-label="Play online" title="Play online"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span id="netc"></span></button>
+    <button id="bChat" aria-label="Chat" title="Chat"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="chatN"></span></button>
     <div class="life"><button id="lm">−</button><span id="life">20</span><button id="lp">+</button></div>
   </div>
-  <div id="bf" data-zone="bf"><div id="pchips"></div><div class="hint">Load a deck, then drag cards from your hand onto the table. Lands go to the strip below.<br>Double-tap a card to tap it. Tap once to preview, press and hold to zoom.</div></div>
+  <div id="bf" data-zone="bf"><div id="pchips"></div><div id="world"><div id="mine"></div></div><div class="hint">Load a deck, then drag cards from your hand onto the table. Lands go to the strip below.<br>Double-tap a card to tap it. Tap once to preview, press and hold to zoom.</div></div>
   <div id="lands" data-zone="land"><div id="manabox"><div class="lbl">Lands</div><div id="mana"><b>0</b>mana</div><div id="pips"></div></div><div id="lcards"></div></div>
   <div id="hand" data-zone="hand"></div>
 </div>
@@ -137,6 +154,8 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
   <div class="row"><button id="cnd">Done</button></div>
 </div></div>
 
+<div id="chat"><div class="row"><b style="flex:1;font-weight:400;font-size:18px">Chat</b><button id="cclose">Close</button></div><div id="cmsgs"></div><div class="row"><input type="search" id="cin" placeholder="Message" enterkeyhint="send" autocomplete="off"><button id="csend">Send</button></div></div>
+
 <div class="ov" id="net"><div class="panel">
   <h2>Play online</h2>
   <input type="search" id="nname" placeholder="Your name" autocomplete="off">
@@ -149,10 +168,8 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 
 <div class="ov" id="opp"><div class="panel" style="width:min(1100px,100%)">
   <h2 id="oh"></h2>
-  <div id="owrap"><div id="obf"></div></div>
-  <div id="ol"></div>
   <div class="row" id="ozb"></div>
-  <div class="grid" id="oz" style="max-height:130px"></div>
+  <div class="grid" id="oz" style="max-height:60vh"></div>
   <div class="row"><button id="oclose">Close</button></div>
 </div></div>
 
@@ -265,7 +282,7 @@ function cardEl(c,cls){
   return d;
 }
 function render(){
-  const bf=$('#bf');bf.querySelectorAll('.card,.pt,.more').forEach(e=>e.remove());
+  const bf=$('#mine');bf.querySelectorAll('.card,.pt,.more').forEach(e=>e.remove());
   S.bf.forEach(c=>{const e=cardEl(c);e.style.left=c.x+'px';e.style.top=c.y+'px';bf.append(e)});
   S.bf.forEach(c=>{
     const cs=Object.entries(c.cn||{});
@@ -277,7 +294,7 @@ function render(){
     }
     const mb=document.createElement('button');mb.className='more';mb.dataset.for=c.id;mb.textContent='…';mb.title='Card menu';mb.style.left=(c.x+CW)+'px';mb.style.top=(c.y-34)+'px';mb.onclick=()=>{showMore(c.id);cardMenu(c,mb)};bf.append(mb);
   });
-  bf.querySelector('.hint').style.display=S.bf.length?'none':'grid';
+  $('#bf .hint').style.display=(S.bf.length||Object.keys(NET.players).length)?'none':'grid';
   syncMore();
   const LC=$('#lcards');LC.innerHTML='';
   {
@@ -329,11 +346,12 @@ document.addEventListener('pointerup',e=>{
     clearTimeout(pk);pk=setTimeout(hidePeek,3000);
     let z=zoneAt(e.clientX,e.clientY);
     if(!z){render();return}
+    if(z==='bf'){const mr=$('#mine').getBoundingClientRect();if(e.clientX<mr.left||e.clientX>mr.right||e.clientY<mr.top||e.clientY>mr.bottom){render();return}}
     const fc=find(d.id),cd=fc&&S[fc[0]][fc[1]];
     if(cd){if(z==='bf'&&cd.land)z='land';else if(z==='land'&&!cd.land)z='bf'}
     if(z==='bf'){
-      const r=$('#bf').getBoundingClientRect();
-      move(d.id,'bf',Math.max(0,Math.min(r.width-CW,e.clientX-CW/2-r.left)),Math.max(34,Math.min(r.height-CH,e.clientY-CH/2-r.top)));
+      const r=$('#mine').getBoundingClientRect();
+      move(d.id,'bf',Math.max(0,Math.min(FW-CW,(e.clientX-r.left)/zm-CW/2)),Math.max(34,Math.min(FH-CH,(e.clientY-r.top)/zm-CH/2)));
       showMore(d.id);
     }else{move(d.id,z);if(z==='land')showMore(d.id)}
   }else if(!d.long){
@@ -349,7 +367,7 @@ document.addEventListener('pointercancel',()=>{drag=null;clearTimeout(timer);ren
 let lastEnd=0;
 document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastEnd<350&&e.target.closest('#bf,#lands,#hand'))e.preventDefault();lastEnd=n},{passive:false});
 document.addEventListener('contextmenu',e=>e.preventDefault());
-document.addEventListener('touchmove',e=>{if(!e.target.closest('.grid,textarea'))e.preventDefault()},{passive:false});
+document.addEventListener('touchmove',e=>{if(!e.target.closest('.grid,textarea,#cmsgs'))e.preventDefault()},{passive:false});
 
 /* ---- buttons ---- */
 $('#zoom').onclick=()=>$('#zoom').classList.remove('on');
@@ -446,17 +464,17 @@ function cardMenu(c,btn){
   place(btn);
 }
 function dup(c){
-  const f=find(c.id),r=$('#bf').getBoundingClientRect();
+  const f=find(c.id),r=$('#mine').getBoundingClientRect();
   if(f&&f[0]==='land'){S.land.push({...c,id:++uid,cn:{...(c.cn||{})},token:true,t:false});render();return}
-  S.bf.push({...c,id:++uid,cn:{...(c.cn||{})},token:true,x:Math.max(0,Math.min(r.width-CW,c.x+24)),y:Math.max(34,Math.min(r.height-CH,c.y+24))});
+  S.bf.push({...c,id:++uid,cn:{...(c.cn||{})},token:true,x:Math.max(0,Math.min(FW-CW,c.x+24)),y:Math.max(34,Math.min(FH-CH,c.y+24))});
   render();
 }
 async function summon(c,t){
   let d={name:t.name,img:'',pt:''};
   try{const r=await fetch('https://api.scryfall.com/cards/'+t.id);const j=await r.json();if(j.name)d={name:j.name,img:imgOf(j),pt:ptOf(j)}}catch(e){}
-  const r=$('#bf').getBoundingClientRect();
-  let x=c.x+CW+8;if(x>r.width-CW)x=c.x-CW-8;
-  S.bf.push({id:++uid,name:d.name,img:d.img,pt:d.pt,tokens:[],cn:{},token:true,x:Math.max(0,x),y:Math.max(34,Math.min(r.height-CH,c.y)),t:false});
+  const r=$('#mine').getBoundingClientRect();
+  let x=c.x+CW+8;if(x>FW-CW)x=c.x-CW-8;
+  S.bf.push({id:++uid,name:d.name,img:d.img,pt:d.pt,tokens:[],cn:{},token:true,x:Math.max(0,x),y:Math.max(34,Math.min(FH-CH,c.y)),t:false});
   render();
 }
 async function moxText(url){
@@ -477,28 +495,31 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, multiplayer v1';
+const BUILD='Build: Oct 23, icon bar v5';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
+let pz=null;const ptr=new Map();
+let viewing=null,zm=1,pan={x:0,y:0},FW=0,FH=0,pd=null,justPanned=0;const G=40;
 let NET={peer:null,id:'',conns:[],host:false,code:'',name:'',players:{}},st=null,oppId=null,ozone=null;
 const status=t=>{$('#nstat').textContent=t};
 const cs=c=>({n:c.name,i:c.img,p:curPT(c),t:c.t?1:0,cn:c.cn||{},k:c.token?1:0,x:c.x,y:c.y});
 const zs=a=>a.map(c=>({n:c.name,i:c.img}));
-function mySnap(){const r=$('#bf').getBoundingClientRect();return{name:NET.name,life:S.life,w:r.width,h:r.height,hand:S.hand.length,lib:S.lib.length,bf:S.bf.map(cs),land:S.land.map(cs),gy:zs(S.gy),ex:zs(S.ex),cmd:zs(S.cmd)}}
+function mySnap(){const r=$('#mine').getBoundingClientRect();return{name:NET.name,life:S.life,w:FW,h:FH,hand:S.hand.length,lib:S.lib.length,bf:S.bf.map(cs),land:S.land.map(cs),gy:zs(S.gy),ex:zs(S.ex),cmd:zs(S.cmd)}}
 function sync(){if(!NET.id)return;const m={t:'snap',id:NET.id,snap:mySnap()};NET.conns.forEach(c=>c.open&&c.send(m))}
 function queueSync(){if(!NET.id)return;clearTimeout(st);st=setTimeout(sync,200)}
-function gotPlayers(){renderPlayers();if($('#opp').classList.contains('on'))fillOpp()}
+function gotPlayers(){renderPlayers();renderOpps();if($('#opp').classList.contains('on'))fillOpp()}
 function onMsg(m,c){
   if(m.t==='snap'){
     if(NET.host){c.pid=m.id;NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m))}
-    NET.players[m.id]=m.snap;gotPlayers();
+    if(!NET.players[m.id])sysMsg(m.snap.name+' joined');NET.players[m.id]=m.snap;gotPlayers();
   }else if(m.t==='all'){Object.assign(NET.players,m.players);delete NET.players[NET.id];gotPlayers()}
-  else if(m.t==='bye'){delete NET.players[m.id];gotPlayers()}
+  else if(m.t==='bye'){if(NET.players[m.id])sysMsg(NET.players[m.id].name+' left');delete NET.players[m.id];gotPlayers()}
+  else if(m.t==='chat'){if(NET.host)NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m));pushChat({name:m.name,text:m.text})}
 }
 function drop(c){
   NET.conns=NET.conns.filter(x=>x!==c);
-  if(c.pid){delete NET.players[c.pid];NET.conns.forEach(x=>x.open&&x.send({t:'bye',id:c.pid}));gotPlayers()}
+  if(c.pid){if(NET.players[c.pid])sysMsg(NET.players[c.pid].name+' left');delete NET.players[c.pid];NET.conns.forEach(x=>x.open&&x.send({t:'bye',id:c.pid}));gotPlayers()}
 }
 function startNet(){
   if(typeof Peer==='undefined'){status('The online library did not load. Check your connection and reload.');return false}
@@ -508,7 +529,7 @@ function hostRoom(){
   if(!startNet())return;
   NET.host=true;NET.code=Math.random().toString(36).slice(2,7).toUpperCase();
   const pr=NET.peer=new Peer('mtgtab-'+NET.code);
-  pr.on('open',id=>{NET.id=id;$('#bNet').textContent='Room '+NET.code;status('Room '+NET.code+' is open. Tell your friends this code.')});
+  pr.on('open',id=>{NET.id=id;$('#netc').textContent=NET.code;status('Room '+NET.code+' is open. Tell your friends this code.')});
   pr.on('connection',c=>{
     c.on('open',()=>{NET.conns.push(c);c.send({t:'all',players:{...NET.players,[NET.id]:mySnap()}})});
     c.on('data',m=>onMsg(m,c));c.on('close',()=>drop(c));
@@ -524,27 +545,86 @@ function joinRoom(){
   pr.on('open',id=>{
     NET.id=id;status('Joining room '+code+'…');
     const c=pr.connect('mtgtab-'+code,{reliable:true});NET.conns=[c];
-    c.on('open',()=>{$('#bNet').textContent='Room '+code;status('Connected to room '+code+'.');sync()});
+    c.on('open',()=>{$('#netc').textContent=code;status('Connected to room '+code+'.');sync()});
     c.on('data',m=>onMsg(m,c));
-    c.on('close',()=>{NET.players={};gotPlayers();status('The host left the room.');$('#bNet').textContent='Online'});
+    c.on('close',()=>{NET.players={};gotPlayers();status('The host left the room.');$('#netc').textContent=''});
   });
   pr.on('error',e=>status(e.type==='peer-unavailable'?'No room with that code.':'Network problem: '+e.type));
 }
 function leave(quiet){
   if(NET.peer)try{NET.peer.destroy()}catch(e){}
   NET={peer:null,id:'',conns:[],host:false,code:'',name:'',players:{}};
-  gotPlayers();$('#bNet').textContent='Online';if(!quiet)status('You left the room.');
+  setPan(0,0,false,1);viewing=null;gotPlayers();$('#netc').textContent='';if(!quiet)status('You left the room.');
+}
+function setPan(x,y,anim,z){if(z!=null)zm=z;const w=$('#world');w.style.transition=anim?'transform .4s ease':'none';pan={x,y};w.style.transform='translate('+x+'px,'+y+'px) scale('+zm+')'}
+function fieldSize(){FW=$('#bf').clientWidth;FH=$('#bf').clientHeight}
+function seats(){
+  if(!NET.id)return[];
+  const ids=[NET.id,...Object.keys(NET.players)].sort(),i=ids.indexOf(NET.id);
+  const others=[...ids.slice(i+1),...ids.slice(0,i)],n=others.length;
+  const nm=n===1?['top']:n===2?['left','right']:['left','top','right'];
+  return others.map((id,k)=>{
+    if(k<3){const t=nm[k];
+      if(t==='left')return{id,cx:-(FH/2+G),cy:FH/2,rot:90};
+      if(t==='right')return{id,cx:FW+G+FH/2,cy:FH/2,rot:-90};
+      return{id,cx:FW/2,cy:-(FH/2+G),rot:180};}
+    return{id,cx:FW/2,cy:-(FH/2+G+(k-2)*(FH+G)),rot:180};
+  });
+}
+function bounds(){
+  let a=0,b=FW,c=0,d=FH;
+  seats().forEach(t=>{const q=Math.abs(t.rot)===90,w=q?FH:FW,h=q?FW:FH;a=Math.min(a,t.cx-w/2);b=Math.max(b,t.cx+w/2);c=Math.min(c,t.cy-h/2);d=Math.max(d,t.cy+h/2)});
+  return[a,b,c,d];
+}
+function minZoom(){const[a,b,c,d]=bounds();return seats().length?Math.max(0.2,Math.min(1,(FW-60)/(b-a),(FH-60)/(d-c))):1}
+function clampPan(x,y,z){
+  z=z||zm;const[a,b,c,d]=bounds(),f=(lo,hi,v)=>lo>hi?(lo+hi)/2:Math.max(lo,Math.min(hi,v));
+  return[f(FW-z*b-30,-z*a+30,x),f(FH-z*d-30,-z*c+30,y)];
+}
+function goTo(id){
+  if(id===NET.id){viewing=id;setPan(0,0,true,1);return}
+  const t=seats().find(t=>t.id===id);if(!t)return;
+  viewing=id;setPan(FW/2-t.cx,FH/2-t.cy,true,1);
 }
 function renderPlayers(){
   const b=$('#pchips');b.innerHTML='';
-  Object.entries(NET.players).forEach(([id,p])=>b.append(mkb(p.name+'  '+p.life+' life · '+p.hand+' in hand',()=>{oppId=id;ozone=null;fillOpp();$('#opp').classList.add('on')})));
+  const ids=Object.keys(NET.players);if(!ids.length)return;
+  b.append(mkb('My field',()=>goTo(NET.id)));
+  ids.forEach(id=>{const p=NET.players[id];b.append(mkb(p.name+'  '+p.life+' life · '+p.hand+' in hand',()=>{
+    if(viewing===id){oppId=id;ozone=null;fillOpp();$('#opp').classList.add('on')}else goTo(id);
+  }))});
   b.querySelectorAll('button').forEach(x=>x.classList.add('chip'));
+}
+function renderOpps(){
+  const w=$('#world');w.querySelectorAll('.ofield').forEach(e=>e.remove());
+  seats().forEach(t=>{
+    const p=NET.players[t.id];if(!p)return;
+    const f=document.createElement('div');f.className='ofield';
+    f.style.cssText='left:'+(t.cx-FW/2)+'px;top:'+(t.cy-FH/2)+'px;width:'+FW+'px;height:'+FH+'px;transform:rotate('+t.rot+'deg)';
+    const LH=70,sc=Math.min(FW/p.w,(FH-LH)/p.h),lay=document.createElement('div');
+    lay.className='olayer';lay.style.cssText='width:'+p.w+'px;height:'+p.h+'px;transform:scale('+sc+');transform-origin:top left';
+    p.bf.forEach(c=>{
+      const e=mini(c);e.style.left=c.x+'px';e.style.top=c.y+'px';lay.append(e);
+      const cn=Object.entries(c.cn||{});
+      if(c.p||cn.length){
+        const q=document.createElement('div');q.className='pt';q.style.left=c.x+'px';q.style.top=(c.y+CH+2)+'px';
+        if(c.p){const sp=document.createElement('span');sp.textContent=c.p;q.append(sp)}
+        cn.forEach(([n,v])=>{const i=document.createElement('i');i.textContent=n+' ×'+v;q.append(i)});lay.append(q);
+      }
+    });
+    f.append(lay);
+    const n=p.land.length,step=n>1?Math.min(52,Math.max(10,(FW-60)/(n-1))):0;
+    p.land.forEach((c,i)=>{const e=mini(c,'xs');e.style.left=(14+i*step)+'px';e.style.top=(FH-LH+4)+'px';f.append(e)});
+    const lb=document.createElement('div');lb.className='olabel';lb.textContent=p.name+' · '+p.life;
+    lb.style.transform='translate(-50%,-50%) rotate('+(-t.rot)+'deg)';f.append(lb);
+    w.append(f);
+  });
 }
 function mini(c,cls){
   const d=document.createElement('div');d.className='card '+(cls||'')+(c.t?' t':'')+(c.k?' tok':'');
   if(c.i){const i=document.createElement('img');i.src=c.i;i.alt=c.n;i.draggable=false;d.append(i)}
   else{d.innerHTML='<div class="nm"></div>';d.firstChild.textContent=c.n}
-  d.onclick=()=>peekRaw(c.i,c.n);return d;
+  d.onclick=()=>{if(Date.now()-justPanned>150)peekRaw(c.i,c.n)};return d;
 }
 function peekRaw(img,name){
   const p=$('#peek');p.innerHTML='';
@@ -556,20 +636,6 @@ function fillOpp(){
   const p=NET.players[oppId];
   if(!p){$('#opp').classList.remove('on');return}
   $('#oh').textContent=p.name+' · '+p.life+' life · '+p.hand+' in hand · '+p.lib+' in library';
-  const sc=Math.min(1,(Math.min(1100,innerWidth)-48)/p.w,(innerHeight-340)/p.h);
-  const w=$('#owrap'),bx=$('#obf');bx.innerHTML='';
-  w.style.width=(p.w*sc)+'px';w.style.height=(p.h*sc)+'px';
-  bx.style.width=p.w+'px';bx.style.height=p.h+'px';bx.style.transform='scale('+sc+')';bx.style.transformOrigin='top left';
-  p.bf.forEach(c=>{
-    const e=mini(c);e.style.left=c.x+'px';e.style.top=c.y+'px';bx.append(e);
-    const cn=Object.entries(c.cn||{});
-    if(c.p||cn.length){
-      const t=document.createElement('div');t.className='pt';t.style.left=c.x+'px';t.style.top=(c.y+CH+2)+'px';
-      if(c.p){const sp=document.createElement('span');sp.textContent=c.p;t.append(sp)}
-      cn.forEach(([n,v])=>{const i=document.createElement('i');i.textContent=n+' ×'+v;t.append(i)});bx.append(t);
-    }
-  });
-  const L=$('#ol');L.innerHTML='';p.land.forEach(c=>L.append(mini(c,'sm')));
   const zb=$('#ozb');zb.innerHTML='';
   [['gy','Graveyard'],['ex','Exile'],['cmd','Command']].forEach(([k,n])=>zb.append(mkb(n+' ('+(p[k]||[]).length+')',()=>{ozone=k;fillOz()})));
   fillOz();
@@ -588,7 +654,66 @@ $('#nclose').onclick=()=>$('#net').classList.remove('on');
 $('#nhost').onclick=hostRoom;$('#njoin').onclick=joinRoom;$('#nleave').onclick=()=>leave();
 $('#oclose').onclick=()=>$('#opp').classList.remove('on');
 
-addEventListener('resize',render);
+/* ---- chat ---- */
+const CHL=[];let unread=0;
+const chatOpen=()=>$('#chat').classList.contains('on');
+function renderChat(){
+  const b=$('#cmsgs');b.innerHTML='';
+  if(!CHL.length){const d=document.createElement('div');d.className='msg sys';d.textContent='No messages yet. Chat works once you are in a room.';b.append(d)}
+  CHL.forEach(m=>{
+    const d=document.createElement('div');d.className='msg'+(m.me?' me':'')+(m.sys?' sys':'');
+    if(!m.sys&&!m.me){const n=document.createElement('b');n.textContent=m.name;d.append(n)}
+    d.append(document.createTextNode(m.text));b.append(d);
+  });
+  b.scrollTop=b.scrollHeight;
+  $('#chatN').textContent=unread||'';
+}
+function pushChat(m){CHL.push(m);if(CHL.length>200)CHL.shift();if(!chatOpen()&&!m.me)unread++;renderChat()}
+const sysMsg=t=>pushChat({sys:1,text:t});
+function sendChat(){
+  const t=$('#cin').value.trim().slice(0,500);if(!t)return;
+  if(!NET.id){sysMsg('Join or create a room first (Online button).');return}
+  const m={t:'chat',id:NET.id,name:NET.name,text:t};
+  NET.conns.forEach(c=>c.open&&c.send(m));
+  pushChat({name:NET.name,text:t,me:1});$('#cin').value='';
+}
+$('#bChat').onclick=()=>{const o=$('#chat');if(chatOpen())o.classList.remove('on');else{unread=0;o.classList.add('on');renderChat()}};
+$('#cclose').onclick=()=>$('#chat').classList.remove('on');
+$('#csend').onclick=sendChat;
+$('#cin').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat()});
+document.addEventListener('pointerdown',e=>{
+  if(!e.target.closest('#bf')||e.target.closest('.card[data-id],button,.more'))return;
+  pd={x:e.clientX,y:e.clientY,px:pan.x,py:pan.y,moved:false};
+});
+document.addEventListener('pointermove',e=>{
+  if(!pd||pz)return;const dx=e.clientX-pd.x,dy=e.clientY-pd.y;
+  if(!pd.moved&&Math.hypot(dx,dy)<8)return;
+  pd.moved=true;const q=clampPan(pd.px+dx,pd.py+dy);setPan(q[0],q[1]);viewing=null;
+});
+document.addEventListener('pointerup',()=>{if(pd&&pd.moved)justPanned=Date.now();pd=null});
+document.addEventListener('pointercancel',()=>{pd=null});
+document.addEventListener('pointerdown',e=>{
+  if(!e.target.closest('#bf'))return;
+  ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===2&&!pz&&!(drag&&drag.moved)){
+    if(drag){drag=null;clearTimeout(timer)}
+    pd=null;
+    const[a,b]=[...ptr.values()],r=$('#bf').getBoundingClientRect(),mx=(a.x+b.x)/2-r.left,my=(a.y+b.y)/2-r.top;
+    pz={d:Math.hypot(a.x-b.x,a.y-b.y)||1,z:zm,wx:(mx-pan.x)/zm,wy:(my-pan.y)/zm};
+  }
+});
+document.addEventListener('pointermove',e=>{
+  if(ptr.has(e.pointerId))ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(!pz||ptr.size<2)return;
+  const[a,b]=[...ptr.values()],r=$('#bf').getBoundingClientRect(),mx=(a.x+b.x)/2-r.left,my=(a.y+b.y)/2-r.top;
+  const nz=Math.max(minZoom(),Math.min(1.5,pz.z*Math.hypot(a.x-b.x,a.y-b.y)/pz.d)),q=clampPan(mx-pz.wx*nz,my-pz.wy*nz,nz);
+  setPan(q[0],q[1],false,nz);viewing=null;
+});
+function ptrUp(e){ptr.delete(e.pointerId);if(pz&&ptr.size<2){pz=null;justPanned=Date.now()}}
+document.addEventListener('pointerup',ptrUp);
+document.addEventListener('pointercancel',ptrUp);
+addEventListener('resize',()=>{fieldSize();render();renderOpps()});
+fieldSize();
 render();
 </script>
 </body>
