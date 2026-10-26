@@ -117,6 +117,35 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 .chip.turn{border-color:var(--gold);box-shadow:0 0 0 2px #e3b95a66}
 #arrows{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none;z-index:5}
 #tgb{position:absolute;top:40px;left:50%;transform:translateX(-50%);z-index:4;max-width:80%;padding:6px 14px;border-radius:15px;background:#000d;border:1px solid var(--gold);color:var(--gold);font-size:14px;display:none;pointer-events:none;text-align:center}
+#bCd{margin-left:auto}
+.life{margin-left:0}
+@media (hover:hover){#bf{cursor:grab}.card[data-id]{cursor:grab}.card.drag{cursor:grabbing}button{cursor:pointer}}
+.fly{position:fixed;left:0;top:0;width:96px;height:134px;z-index:150;pointer-events:none;border-radius:7px;overflow:hidden;background:#222;box-shadow:0 8px 20px #000a;font-size:12px;transform-origin:center}
+.fly img{width:100%;height:100%;display:block;object-fit:cover;object-position:left top}
+@keyframes pulse{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+.pulse{animation:pulse .5s ease}
+@keyframes pop{0%{transform:scale(.4);opacity:0;box-shadow:0 0 0 0 #e3b95a}60%{transform:scale(1.1);opacity:1;box-shadow:0 0 22px 8px #e3b95a}100%{transform:scale(1)}}
+.pop{animation:pop .5s ease-out}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .4s}
+@keyframes bump{0%{transform:scale(1)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
+.bump{animation:bump .35s}
+@keyframes slideb{0%{opacity:0;top:-24px}100%{opacity:1;top:6px}}
+#turnb.slide{animation:slideb .5s ease}
+@keyframes fieldflash{0%{box-shadow:inset 0 0 0 0 #e3b95a00}30%{box-shadow:inset 0 0 90px 12px #e3b95aaa}100%{box-shadow:inset 0 0 0 0 #e3b95a00}}
+#mine.flash{animation:fieldflash 1s ease-out}
+.life,.chip{position:relative}
+.delta{position:absolute;left:50%;top:-6px;font-size:20px;pointer-events:none;animation:floatup 1s ease-out forwards;text-shadow:0 1px 3px #000}
+.chip .delta{top:-16px}
+.delta.up{color:#8be39b}.delta.down{color:#ff8a7a}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,0)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-34px)}}
+#toast{position:fixed;left:50%;bottom:190px;transform:translate(-50%,10px);z-index:160;background:#000d;border:1px solid #7d5733;border-radius:16px;padding:8px 16px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:80vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+body.dragging .z,body.dragging #lands,body.dragging #hand{outline:2px dashed #e3b95a88;outline-offset:-3px}
+body.dragging .hl{outline:3px solid #e3b95a}
+.ofield.give{box-shadow:0 0 0 4px #e3b95a,inset 0 0 50px #e3b95a66}
+.ofield.give .olabel{color:#e3b95a}
+body.noanim *{animation:none!important}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
@@ -133,10 +162,10 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
     <button class="z" data-zone="gy" id="zGy" aria-label="Graveyard" title="Graveyard"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V9a6 6 0 0 1 12 0v12z"/><path d="M12 8v6M9.5 10.5h5"/><path d="M3 21h18"/></svg><b>0</b></button>
     <button class="z" data-zone="ex" id="zEx" aria-label="Exile" title="Exile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="5.5" ry="9.5"/><ellipse cx="12" cy="12" rx="2" ry="5"/><path d="M3 12h2M19 12h2"/></svg><b>0</b></button>
     <button class="z" data-zone="cmd" id="zCmd" aria-label="Command zone" title="Command zone"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18"/><path d="M6 3v17l6-4 6 4V3"/></svg><b>0</b></button>
-    <button id="bCd" aria-label="Commander damage" title="Commander damage"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></svg></button>
     <button id="bTurn" aria-label="Turn order" title="Turn order"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg></button>
     <button id="bNet" aria-label="Play online" title="Play online"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span id="netc"></span></button>
     <button id="bChat" aria-label="Chat" title="Chat"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="chatN"></span></button>
+    <button id="bCd" aria-label="Commander damage" title="Commander damage"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></svg></button>
     <div class="life"><button id="lm">−</button><span id="life">20</span><button id="lp">+</button></div>
   </div>
   <div id="bf" data-zone="bf"><div id="pchips"></div><div id="turnb"></div><div id="tgb"></div><div id="world"><div id="mine"></div><svg id="arrows"><defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e3b95a"/></marker></defs><g id="arrg"></g></svg></div><div class="hint">Load a deck, then drag cards from your hand onto the table. Lands go to the strip below.<br>Double-tap a card to tap it. Tap once to preview, press and hold to zoom.</div></div>
@@ -145,6 +174,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 </div>
 
 <div id="peek"></div>
+<div id="toast"></div>
 <div class="ov" id="zoom"><img id="zimg" alt=""></div>
 
 <div class="ov" id="imp"><div class="panel">
@@ -190,6 +220,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
   <div class="row"><button id="nhost">Create room</button></div>
   <div class="row"><input type="search" id="ncode" placeholder="Room code" autocapitalize="characters" autocomplete="off"><button id="njoin">Join</button></div>
   <div id="nstat" style="font-size:14px;color:var(--gold);min-height:20px">Your hand and library stay private. Friends only see your table.</div>
+  <label style="display:flex;gap:10px;align-items:center;font-size:14px"><input type="checkbox" id="anim" checked style="width:22px;height:22px;accent-color:#e3b95a">Animations</label>
   <div class="ver"></div>
   <div class="row"><button id="nleave">Leave room</button><button id="nclose">Close</button></div>
 </div></div>
@@ -317,6 +348,7 @@ function render(){
     const cs=Object.entries(c.cn||{});
     if(c.pt||cs.length){
       const p=document.createElement('div');p.className='pt';p.dataset.for=c.id;p.style.left=c.x+'px';p.style.top=(c.y+CH+2)+'px';
+      const bk=curPT(c)+'|'+JSON.stringify(c.cn||{});if(lastBadge[c.id]!==undefined&&lastBadge[c.id]!==bk)p.classList.add('pulse');lastBadge[c.id]=bk;
       if(c.pt){const sp=document.createElement('span'),v=curPT(c);sp.textContent=v;if(v!==c.pt)sp.style.color='#9be37a';p.append(sp)}
       cs.forEach(([n,v])=>{const i=document.createElement('i');i.textContent=n+' ×'+v;p.append(i)});
       bf.append(p);
@@ -334,20 +366,21 @@ function render(){
     });
     const tp=S.land.filter(c=>c.t),cnt={};let any=0;
     tp.forEach(c=>{const m=c.mana||[];if(m.length===1)cnt[m[0]]=(cnt[m[0]]||0)+1;else any++});
-    $('#mana b').textContent=tp.length;
+    if(lastMana!==null&&lastMana!==tp.length)pulse($('#mana b'));lastMana=tp.length;$('#mana b').textContent=tp.length;
     const pp=$('#pips');pp.innerHTML='';
     ['W','U','B','R','G','C'].forEach(k=>{if(cnt[k]){const sp=document.createElement('span');sp.className='pip p'+k;sp.textContent=cnt[k];pp.append(sp)}});
     if(any){const sp=document.createElement('span');sp.className='pip pany';sp.title='Lands that can make several colors';sp.textContent=any;pp.append(sp)}
   }
   const h=$('#hand');h.innerHTML='';S.hand.forEach(c=>h.append(cardEl(c)));
   $('#zLib b').textContent=S.lib.length;$('#zGy b').textContent=S.gy.length;$('#zEx b').textContent=S.ex.length;$('#zCmd b').textContent=S.cmd.length;
-  $('#life').textContent=S.life;pruneArrows();renderArrows();queueSync();
+  $('#life').textContent=S.life;lifeFx();pruneArrows();renderArrows();queueSync();
 }
 
 /* ---- pointer: tap, long-press zoom, drag ---- */
 let drag=null,timer=null,lastTap={id:0,t:0};
 function zoom(id){const f=find(id);if(!f)return;const c=S[f[0]][f[1]];if(!c.img)return;$('#zimg').src=c.img;$('#zoom').classList.add('on')}
 document.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'&&e.button!==0)return;
   const el=e.target.closest('.card[data-id]');if(!el)return;
   const id=+el.dataset.id,f=find(id);
   drag={el,id,zone:f&&f[0],sx:e.clientX,sy:e.clientY,moved:false,long:false};
@@ -358,19 +391,21 @@ document.addEventListener('pointermove',e=>{
   if(!drag)return;
   if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>8){
     drag.moved=true;clearTimeout(timer);
-    drag.el.classList.add('drag');drag.el.style.width=CW+'px';drag.el.style.height=CH+'px';showPeek(drag.id,true);document.querySelectorAll('[data-for="'+drag.id+'"]').forEach(e=>e.style.display='none');
+    drag.el.classList.add('drag');drag.el.style.width=CW+'px';drag.el.style.height=CH+'px';showPeek(drag.id,true);document.body.classList.add('dragging');document.querySelectorAll('[data-for="'+drag.id+'"]').forEach(e=>e.style.display='none');
   }
   if(drag.moved){
     drag.el.style.left=(e.clientX-CW/2)+'px';drag.el.style.top=(e.clientY-CH/2)+'px';
     const z=zoneAt(e.clientX,e.clientY);
     document.querySelectorAll('.z').forEach(b=>b.classList.toggle('hl',b.dataset.zone===z));
-    $('#lands').classList.toggle('hl',z==='land');
+    const fcz=find(drag.id),cz=fcz&&S[fcz[0]][fcz[1]],ofz=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x.classList&&x.classList.contains('ofield'));
+    $('#lands').classList.toggle('hl',z==='land'||(!ofz&&z==='bf'&&!!(cz&&cz.land)));
+    document.querySelectorAll('.ofield').forEach(f=>{const on=f===ofz;f.classList.toggle('give',on);const lb=f.querySelector('.olabel');if(lb)lb.textContent=on?'Give to '+f.dataset.name:(lb.dataset.t||lb.textContent)});
   }
 });
 function zoneAt(x,y){const t=document.elementsFromPoint(x,y).find(p=>p.dataset&&p.dataset.zone&&!p.classList.contains('card'));return t&&t.dataset.zone}
 document.addEventListener('pointerup',e=>{
   if(!drag)return;clearTimeout(timer);
-  const d=drag;drag=null;document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));$('#lands').classList.remove('hl');
+  const d=drag;drag=null;document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));$('#lands').classList.remove('hl');endDragFx();
   if(d.moved){
     clearTimeout(pk);pk=setTimeout(hidePeek,3000);
     const ofe=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x.classList&&x.classList.contains('ofield'));
@@ -384,7 +419,13 @@ document.addEventListener('pointerup',e=>{
       const r=$('#mine').getBoundingClientRect();
       move(d.id,'bf',Math.max(0,Math.min(FW-CW,(e.clientX-r.left)/zm-CW/2)),Math.max(34,Math.min(FH-CH,(e.clientY-r.top)/zm-CH/2)));
       showMore(d.id);
-    }else{move(d.id,z);if(z==='land')showMore(d.id)}
+    }else{
+      const fr=d.el.getBoundingClientRect(),fc=find(d.id),cc=fc&&S[fc[0]][fc[1]];
+      move(d.id,z);
+      if(z==='land')showMore(d.id);
+      else if(z==='hand'){if(cc&&!cc.token)flyIn($('#hand .card:last-child'),fr)}
+      else if(ZB[z]&&cc){flyClone(cc.img,cc.name,fr,rectOf($(ZB[z])),{fade:true});bumpEl($(ZB[z]+' b'))}
+    }
   }else if(!d.long){
     if(TG){if(d.zone==='bf'){const tc=S.bf.find(c=>c.id===d.id);if(tc&&gid(tc)!==TG.g)addArrow({k:'c',g:gid(tc)});else endTarget()}else endTarget();return}
     const now=Date.now();
@@ -394,7 +435,7 @@ document.addEventListener('pointerup',e=>{
     else{lastTap={id:d.id,t:now};showPeek(d.id)}
   }
 });
-document.addEventListener('pointercancel',()=>{drag=null;clearTimeout(timer);render()});
+document.addEventListener('pointercancel',()=>{drag=null;endDragFx();clearTimeout(timer);render()});
 ['gesturestart','gesturechange','gestureend','dblclick'].forEach(t=>document.addEventListener(t,e=>e.preventDefault()));
 let lastEnd=0;
 document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastEnd<350&&e.target.closest('#bf,#lands,#hand'))e.preventDefault();lastEnd=n},{passive:false});
@@ -416,7 +457,7 @@ $('#go').onclick=async()=>{
   }
   if(await loadDeck(txt)){if(!lastMissing.length)$('#imp').classList.remove('on');newGame()}b.disabled=false};
 $('#restart').onclick=()=>{if(S.deck.length){newGame();$('#imp').classList.remove('on')}else $('#msg').textContent='Load a deck first.'};
-$('#bDraw').onclick=()=>{draw();render()};
+$('#bDraw').onclick=drawOne;
 $('#zLib').onclick=()=>openZone('lib');
 $('#bShuf').onclick=()=>{shuffle(S.lib);render()};
 $('#bUntap').onclick=()=>{S.bf.forEach(c=>c.t=false);S.land.forEach(c=>c.t=false);render()};
@@ -437,7 +478,7 @@ function fillZone(){
   shown.forEach(c=>{
     const d=document.createElement('div');
     if(c.img){d.style.padding=0;const i=document.createElement('img');i.src=c.img;i.alt=c.name;d.append(i)}else d.textContent=c.name;
-    d.onclick=()=>{if(curZone==='cmd'){move(c.id,'bf',24+(S.bf.length%8)*28,48);$('#zl').classList.remove('on')}else{move(c.id,'hand');fillZone()}};
+    d.onclick=()=>{const fr=rectOf(d);if(curZone==='cmd'){move(c.id,'bf',24+(S.bf.length%8)*28,48);$('#zl').classList.remove('on');flyIn(document.querySelector('#mine .card[data-id="'+c.id+'"]'),fr)}else{move(c.id,'hand');fillZone();flyIn($('#hand .card:last-child'),fr)}};
     g.append(d);
   });
 }
@@ -494,8 +535,8 @@ function cardMenu(c,btn){
   const fz=find(c.id);
   if(fz&&fz[0]==='bf')add('Target',()=>startTarget(c));
   if(S.arrows.some(a=>a.s===gid(c)))add('Clear targets',()=>{S.arrows=S.arrows.filter(a=>a.s!==gid(c));render()});
-  add('Destroy',()=>move(c.id,'gy'),'del');
-  add('Exile',()=>move(c.id,'ex'));
+  add('Destroy',()=>moveAnim(c.id,'gy'),'del');
+  add('Exile',()=>moveAnim(c.id,'ex'));
   place(btn);
 }
 function dup(c){
@@ -530,7 +571,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, targeting v9';
+const BUILD='Build: Oct 23, visual feedback v11';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -547,7 +588,9 @@ function gotPlayers(){renderPlayers();renderOpps();renderArrows();if($('#opp').c
 function onMsg(m,c){
   if(m.t==='snap'){
     if(NET.host){c.pid=m.id;NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m))}
-    if(!NET.players[m.id])sysMsg(m.snap.name+' joined');NET.players[m.id]=m.snap;gotPlayers();
+    const old=NET.players[m.id];
+    if(!old)sysMsg(m.snap.name+' joined');else noteRemote(old,m.snap);
+    NET.players[m.id]=m.snap;gotPlayers();
   }else if(m.t==='all'){Object.assign(NET.players,m.players);delete NET.players[NET.id];if(m.turn)applyTurn(m.turn);gotPlayers()}
   else if(m.t==='bye'){if(NET.players[m.id])sysMsg(NET.players[m.id].name+' left');delete NET.players[m.id];gotPlayers()}
   else if(m.t==='chat'){if(NET.host)NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m));pushChat({name:m.name,text:m.text})}
@@ -631,19 +674,22 @@ function renderPlayers(){
   ids.forEach(id=>{const p=NET.players[id];const bt=mkb(p.name+'  '+p.life+' life · '+p.hand+' in hand',()=>{
     if(TG){addArrow({k:'p',p:id});return}
     if(viewing===id){oppId=id;ozone=null;fillOpp();$('#opp').classList.add('on')}else goTo(id);
-  });if(T.p===id)bt.classList.add('turn');b.append(bt)});
+  });if(T.p===id)bt.classList.add('turn');
+    if(p.pulse){bt.classList.add('pulse');p.pulse=false}
+    if(p.dl){const dl=document.createElement('span');dl.className='delta '+(p.dl>0?'up':'down');dl.textContent=(p.dl>0?'+':'')+p.dl;bt.append(dl);p.dl=0}
+    b.append(bt)});
   b.querySelectorAll('button').forEach(x=>x.classList.add('chip'));
 }
 function renderOpps(){
   const w=$('#world');w.querySelectorAll('.ofield').forEach(e=>e.remove());
   seats().forEach(t=>{
     const p=NET.players[t.id];if(!p)return;
-    const f=document.createElement('div');f.className='ofield';f.dataset.pid=t.id;
+    const f=document.createElement('div');f.className='ofield';f.dataset.pid=t.id;f.dataset.name=p.name;
     f.style.cssText='left:'+(t.cx-FW/2)+'px;top:'+(t.cy-FH/2)+'px;width:'+FW+'px;height:'+FH+'px;transform:rotate('+t.rot+'deg)';
     if(T.p===t.id)f.style.borderColor='#e3b95a';const LH=70,sc=Math.min(FW/p.w,(FH-LH)/p.h),lay=document.createElement('div');
     lay.className='olayer';lay.style.cssText='width:'+p.w+'px;height:'+p.h+'px;transform:scale('+sc+');transform-origin:top left';
     p.bf.forEach(c=>{
-      const e=mini(c);e.style.left=c.x+'px';e.style.top=c.y+'px';lay.append(e);
+      const e=mini(c);if((p.fresh||[]).includes(c.g))e.classList.add('pop');e.style.left=c.x+'px';e.style.top=c.y+'px';lay.append(e);
       const cn=Object.entries(c.cn||{});
       if(c.p||cn.length){
         const q=document.createElement('div');q.className='pt';q.style.left=c.x+'px';q.style.top=(c.y+CH+2)+'px';
@@ -651,10 +697,10 @@ function renderOpps(){
         cn.forEach(([n,v])=>{const i=document.createElement('i');i.textContent=n+' ×'+v;q.append(i)});lay.append(q);
       }
     });
-    f.append(lay);
+    p.fresh=[];f.append(lay);
     const n=p.land.length,step=n>1?Math.min(52,Math.max(10,(FW-60)/(n-1))):0;
     p.land.forEach((c,i)=>{const e=mini(c,'xs');e.style.left=(14+i*step)+'px';e.style.top=(FH-LH+4)+'px';f.append(e)});
-    const lb=document.createElement('div');lb.className='olabel';lb.textContent=p.name+' · '+p.life;
+    const lb=document.createElement('div');lb.className='olabel';lb.textContent=p.name+' · '+p.life;lb.dataset.t=lb.textContent;
     lb.style.transform='translate(-50%,-50%) rotate('+(-t.rot)+'deg)';f.append(lb);
     w.append(f);
   });
@@ -692,6 +738,73 @@ $('#bNet').onclick=()=>$('#net').classList.add('on');
 $('#nclose').onclick=()=>$('#net').classList.remove('on');
 $('#nhost').onclick=hostRoom;$('#njoin').onclick=joinRoom;$('#nleave').onclick=()=>leave();
 $('#oclose').onclick=()=>$('#opp').classList.remove('on');
+
+/* ---- visual feedback ---- */
+let ANIM=true,lastLife=null,lastMana=null,lastTurn=null;const lastBadge={};
+try{ANIM=localStorage.getItem('mtg_anim')!=='0'}catch(e){}
+const animOn=()=>ANIM&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+function syncAnim(){document.body.classList.toggle('noanim',!animOn());$('#anim').checked=ANIM}
+$('#anim').onchange=e=>{ANIM=e.target.checked;try{localStorage.setItem('mtg_anim',ANIM?'1':'0')}catch(x){}syncAnim()};
+syncAnim();
+const rectOf=el=>el.getBoundingClientRect();
+const ZB={lib:'#zLib',gy:'#zGy',ex:'#zEx',cmd:'#zCmd'};
+function toast(t){const b=$('#toast');b.textContent=t;b.classList.add('on');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('on'),2200)}
+function pulse(el,cls){if(!el)return;cls=cls||'pulse';el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls)}
+const bumpEl=el=>pulse(el,'bump');
+function flyClone(img,name,from,to,o){
+  o=o||{};if(!animOn()||!from||!to)return Promise.resolve();
+  const d=document.createElement('div');d.className='fly';
+  if(img){const i=document.createElement('img');i.src=img;i.alt='';d.append(i)}else{d.style.padding='6px';d.textContent=name||''}
+  document.body.append(d);
+  const fx=from.left+from.width/2,fy=from.top+from.height/2,tx=to.left+to.width/2,ty=to.top+to.height/2;
+  const s0=from.width/CW,s1=Math.max(.15,to.width/CW);
+  const a=d.animate([
+    {transform:'translate('+(fx-CW/2)+'px,'+(fy-CH/2)+'px) scale('+s0+')',opacity:1},
+    {transform:'translate('+(tx-CW/2)+'px,'+(ty-CH/2)+'px) scale('+s1+')',opacity:o.fade?0.2:1}
+  ],{duration:o.dur||380,delay:o.delay||0,easing:'cubic-bezier(.4,0,.2,1)',fill:'both'});
+  return new Promise(r=>{a.onfinish=()=>{d.remove();r()}});
+}
+function flyIn(el,from,delay){
+  if(!el||!from||!animOn())return;
+  const img=el.querySelector('img');el.style.visibility='hidden';
+  flyClone(img?img.src:'',el.textContent,from,rectOf(el),{delay:delay||0}).then(()=>{el.style.visibility=''});
+}
+function flyAway(el,to,delay){
+  if(!el||!animOn())return;
+  const img=el.querySelector('img');
+  flyClone(img?img.src:'',el.textContent,rectOf(el),to,{delay:delay||0,fade:true,dur:320});el.style.visibility='hidden';
+}
+function moveAnim(id,to){
+  const el=document.querySelector('.card[data-id="'+id+'"]'),f=find(id),c=f&&S[f[0]][f[1]],fr=el&&rectOf(el);
+  move(id,to);
+  if(c&&fr&&ZB[to]){flyClone(c.img,c.name,fr,rectOf($(ZB[to])),{fade:true});bumpEl($(ZB[to]+' b'))}
+}
+function drawOne(){
+  if(!S.lib.length){pulse($('#zLib'),'shake');toast('Your library is empty');return}
+  draw();render();
+  flyIn($('#hand .card:last-child'),rectOf($('#zLib')));bumpEl($('#zLib b'));
+}
+function lifeFx(){
+  if(lastLife!==null&&S.life!==lastLife){
+    const d=S.life-lastLife,l=$('#life'),x=document.createElement('span');
+    pulse(l);x.className='delta '+(d>0?'up':'down');x.textContent=(d>0?'+':'')+d;l.parentNode.append(x);setTimeout(()=>x.remove(),1000);
+  }
+  lastLife=S.life;
+}
+function endDragFx(){
+  document.body.classList.remove('dragging');
+  document.querySelectorAll('.ofield').forEach(f=>{f.classList.remove('give');const lb=f.querySelector('.olabel');if(lb&&lb.dataset.t)lb.textContent=lb.dataset.t});
+}
+function noteRemote(o,n){
+  const og=new Set((o.bf||[]).map(c=>c.g)),fresh=(n.bf||[]).filter(c=>!og.has(c.g));
+  n.fresh=fresh.map(c=>c.g);
+  const tapped=(n.bf||[]).some(c=>{const q=(o.bf||[]).find(x=>x.g===c.g);return q&&q.t!==c.t});
+  const lifeD=n.life-o.life,landUp=(n.land||[]).length>(o.land||[]).length;
+  if(fresh.length||tapped||lifeD||landUp||(n.gy||[]).length!==(o.gy||[]).length||(n.ex||[]).length!==(o.ex||[]).length)n.pulse=true;
+  if(lifeD)n.dl=lifeD;
+  if(fresh.length)toast(n.name+' played '+(fresh.length<=2?fresh.map(c=>c.n).join(' and '):fresh.length+' cards'));
+  else if(landUp)toast(n.name+' played a land');
+}
 
 /* ---- targeting ---- */
 function startTarget(c){
@@ -752,6 +865,7 @@ function renderTurn(){
   if(!T.p)b.style.display='none';
   else{b.style.display='block';b.className=mine?'me':'';b.id='turnb';b.textContent='Turn '+T.n+' · '+(mine?'your turn':nameOf(T.p)+"'s turn")}
   $('#mine').classList.toggle('turn',!!T.p&&mine);
+  const tk=T.p+'|'+T.n;if(lastTurn!==null&&lastTurn!==tk&&T.p){pulse(b,'slide');if(mine){pulse($('#mine'),'flash');toast('Your turn')}}lastTurn=tk;
   renderPlayers();renderOpps();
 }
 function applyTurn(t){if(!t||t.ts<=T.ts)return;T=t;S.arrows=[];renderTurn();render()}
@@ -787,13 +901,16 @@ function doGive(id,pid,x,y){
   const f=find(id);if(!f)return;const c=S[f[0]][f[1]];
   const card={name:c.name,img:c.img,pt:c.pt,tokens:c.tokens||[],cn:c.cn||{},token:!!c.token,land:!!c.land,mana:c.mana||[],faces:c.faces||null,face:c.face||0,t:c.t?1:0};
   if(!sendTo({t:'give',to:pid,from:NET.name,card,x,y})){sysMsg('Could not reach '+nameOf(pid)+'. The card stayed with you.');return}
+  const el0=document.querySelector('.card[data-id="'+id+'"]'),fr0=el0&&rectOf(el0),of0=document.querySelector('.ofield[data-pid="'+pid+'"]');
   S[f[0]].splice(f[1],1);render();sysMsg('You gave '+c.name+' to '+nameOf(pid));
+  if(fr0&&of0){const q=rectOf(of0);flyClone(c.img,c.name,fr0,{left:q.left+q.width/2-20,top:q.top+q.height/2-28,width:40,height:56},{fade:true,dur:520})}
 }
 function receiveCard(m){
   const k=m.card,c={id:++uid,name:k.name,img:k.img,pt:k.pt||'',tokens:k.tokens||[],cn:k.cn||{},token:k.token,land:k.land,mana:k.mana||[],faces:k.faces,face:k.face||0,t:!!k.t,x:0,y:0};
   if(c.land)S.land.push(c);
   else{c.x=Math.max(0,Math.min(FW-CW,m.x));c.y=Math.max(34,Math.min(FH-CH,m.y));S.bf.push(c)}
   sysMsg((m.from||'Someone')+' gave you '+c.name);render();
+  pulse(document.querySelector((c.land?'#lcards':'#mine')+' .card[data-id="'+c.id+'"]'),'pop');toast((m.from||'Someone')+' gave you '+c.name);
 }
 
 /* ---- commander damage ---- */
@@ -831,9 +948,16 @@ $('#muc').onclick=()=>$('#mu').classList.remove('on');
 function doMull(free){
   if(!S.hand.length&&!S.lib.length)return;
   if(!free)S.mull++;
-  S.lib.push(...S.hand);S.hand=[];shuffle(S.lib);
-  const n=Math.max(0,7-S.mull);for(let i=0;i<n;i++)draw();
-  render();
+  const lib=rectOf($('#zLib')),els=[...document.querySelectorAll('#hand .card')];
+  els.forEach((e,k)=>flyAway(e,lib,k*40));
+  const go=()=>{
+    S.lib.push(...S.hand);S.hand=[];shuffle(S.lib);
+    const n=Math.max(0,7-S.mull);for(let k=0;k<n;k++)draw();
+    render();
+    [...document.querySelectorAll('#hand .card')].forEach((e,k)=>flyIn(e,lib,k*70));
+    bumpEl($('#zLib b'));
+  };
+  if(animOn()&&els.length)setTimeout(go,420);else go();
 }
 $('#bMull').onclick=()=>{
   const n=7-S.mull;
@@ -903,6 +1027,7 @@ $('#cclose').onclick=()=>$('#chat').classList.remove('on');
 $('#csend').onclick=sendChat;
 $('#cin').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat()});
 document.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'&&e.button!==0)return;
   if(!e.target.closest('#bf')||e.target.closest('.card[data-id],button,.more'))return;
   pd={x:e.clientX,y:e.clientY,px:pan.x,py:pan.y,moved:false,bg:!e.target.closest('.card,#pchips,#turnb,.arrow')};
 });
@@ -934,6 +1059,14 @@ function ptrUp(e){ptr.delete(e.pointerId);if(pz&&ptr.size<2){pz=null;justPanned=
 document.addEventListener('pointerup',ptrUp);
 document.addEventListener('pointercancel',ptrUp);
 addEventListener('resize',()=>{fieldSize();render();renderOpps()});
+$('#bf').addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=$('#bf').getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  const dy=e.deltaMode===1?e.deltaY*16:e.deltaY;
+  const nz=Math.max(minZoom(),Math.min(1.5,zm*Math.exp(-dy*(e.ctrlKey?0.01:0.0015))));
+  const wx=(mx-pan.x)/zm,wy=(my-pan.y)/zm,q=clampPan(mx-wx*nz,my-wy*nz,nz);
+  setPan(q[0],q[1],false,nz);viewing=null;
+},{passive:false});
 fieldSize();
 render();
 </script>
