@@ -45,7 +45,7 @@ textarea{width:100%;height:220px;background:#160d06;color:var(--ink);border:1px 
 #peek.on{opacity:1;visibility:visible;transition:opacity .15s}
 #peek img{width:100%;display:block;border-radius:14px;box-shadow:0 12px 30px #000c}
 #peek .nm{background:#222;border-radius:14px;padding:16px;font-size:18px;aspect-ratio:5/7}
-input[type=search]{width:100%;font:16px Georgia,serif;color:var(--ink);background:#160d06;border:1px solid #7d5733;border-radius:8px;padding:11px 12px;min-height:44px;user-select:text;-webkit-user-select:text}
+input[type=search],input[type=number]{width:100%;font:16px Georgia,serif;color:var(--ink);background:#160d06;border:1px solid #7d5733;border-radius:8px;padding:11px 12px;min-height:44px;user-select:text;-webkit-user-select:text}
 .pt{position:absolute;width:var(--w);display:flex;flex-wrap:wrap;justify-content:center;gap:3px;pointer-events:none;z-index:1}
 .pt i{font-style:normal;font-size:12px;white-space:nowrap;background:#000b;color:var(--ink);border:1px solid #7d5733;border-radius:9px;padding:0 7px}
 .pt span{display:inline-block;background:#000b;color:var(--gold);border:1px solid #7d5733;border-radius:10px;padding:1px 9px;font-size:15px}
@@ -105,6 +105,16 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 #bar>button{min-width:44px;padding:8px 10px;display:inline-flex;align-items:center;justify-content:center}
 #bar{gap:10px}
 #netc,#chatN{font-size:12px;color:var(--gold);margin-left:4px}
+.sct{flex:none;width:112px;display:flex;flex-direction:column;gap:6px}
+.sct .pic{border-radius:7px;font-size:12px;background:#222;min-height:150px}
+.sct img{width:100%;display:block;border-radius:7px}
+.sct.bot .pic{opacity:.4}
+.sct .row{gap:4px}
+.sct button{min-width:0;padding:6px 8px;min-height:40px;flex:1}
+#turnb{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:3;padding:4px 14px;border-radius:15px;background:#000b;border:1px solid #7d5733;font-size:14px;white-space:nowrap;display:none;pointer-events:none}
+#turnb.me{border-color:var(--gold);color:var(--gold)}
+#mine.turn{outline:3px solid var(--gold)}
+.chip.turn{border-color:var(--gold);box-shadow:0 0 0 2px #e3b95a66}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
@@ -114,16 +124,20 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
     <button id="bImport" aria-label="Import deck" title="Import deck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 17v3h16v-3"/></svg></button>
     <button class="z" data-zone="lib" id="zLib" aria-label="Library" title="Library"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-13c-3-.5-6 0-8 1.5z"/><path d="M12 6v13"/></svg><b>0</b></button>
     <button id="bDraw" aria-label="Draw a card" title="Draw a card"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="1.5" width="8" height="11" rx="1.3" transform="rotate(-12 6 7)"/><g transform="translate(4.5 5.5) scale(.72)" stroke-width="2.6"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></g></svg></button>
+    <button id="bMull" aria-label="Mulligan" title="Mulligan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="9" rx="1.2" transform="rotate(-15 5.5 7.5)"/><rect x="8.5" y="2" width="7" height="9" rx="1.2"/><rect x="15" y="3" width="7" height="9" rx="1.2" transform="rotate(15 18.5 7.5)"/><path d="M15.6 19a3.6 3.6 0 1 1-1.05-2.55L15.6 17.6"/><path d="M15.6 14.8v2.8h-2.8"/></svg></button>
+    <button id="bScry" aria-label="Scry" title="Scry"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
     <button id="bShuf" aria-label="Shuffle library" title="Shuffle library"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg></button>
     <button id="bUntap" aria-label="Untap all" title="Untap all"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
     <button class="z" data-zone="gy" id="zGy" aria-label="Graveyard" title="Graveyard"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V9a6 6 0 0 1 12 0v12z"/><path d="M12 8v6M9.5 10.5h5"/><path d="M3 21h18"/></svg><b>0</b></button>
     <button class="z" data-zone="ex" id="zEx" aria-label="Exile" title="Exile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="5.5" ry="9.5"/><ellipse cx="12" cy="12" rx="2" ry="5"/><path d="M3 12h2M19 12h2"/></svg><b>0</b></button>
     <button class="z" data-zone="cmd" id="zCmd" aria-label="Command zone" title="Command zone"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18"/><path d="M6 3v17l6-4 6 4V3"/></svg><b>0</b></button>
+    <button id="bCd" aria-label="Commander damage" title="Commander damage"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></svg></button>
+    <button id="bTurn" aria-label="Turn order" title="Turn order"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg></button>
     <button id="bNet" aria-label="Play online" title="Play online"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span id="netc"></span></button>
     <button id="bChat" aria-label="Chat" title="Chat"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="chatN"></span></button>
     <div class="life"><button id="lm">−</button><span id="life">20</span><button id="lp">+</button></div>
   </div>
-  <div id="bf" data-zone="bf"><div id="pchips"></div><div id="world"><div id="mine"></div></div><div class="hint">Load a deck, then drag cards from your hand onto the table. Lands go to the strip below.<br>Double-tap a card to tap it. Tap once to preview, press and hold to zoom.</div></div>
+  <div id="bf" data-zone="bf"><div id="pchips"></div><div id="turnb"></div><div id="world"><div id="mine"></div></div><div class="hint">Load a deck, then drag cards from your hand onto the table. Lands go to the strip below.<br>Double-tap a card to tap it. Tap once to preview, press and hold to zoom.</div></div>
   <div id="lands" data-zone="land"><div id="manabox"><div class="lbl">Lands</div><div id="mana"><b>0</b>mana</div><div id="pips"></div></div><div id="lcards"></div></div>
   <div id="hand" data-zone="hand"></div>
 </div>
@@ -156,6 +170,18 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 
 <div id="chat"><div class="row"><b style="flex:1;font-weight:400;font-size:18px">Chat</b><button id="cclose">Close</button></div><div id="cmsgs"></div><div class="row"><input type="search" id="cin" placeholder="Message" enterkeyhint="send" autocomplete="off"><button id="csend">Send</button></div></div>
 
+<div class="ov" id="cd"><div class="panel" style="width:min(460px,100%)">
+  <h2>Commander damage</h2>
+  <div style="font-size:13px;color:#cdbb97">Damage you have taken from each opponent's commander. 21 or more from one commander is lethal.</div>
+  <div id="cdr" style="display:flex;flex-direction:column;gap:10px;overflow:auto"></div>
+  <label style="display:flex;gap:10px;align-items:center;font-size:14px"><input type="checkbox" id="cdl" checked style="width:22px;height:22px;accent-color:#e3b95a">Also change my life total</label>
+  <div class="row"><button id="cdx">Close</button></div>
+</div></div>
+
+<div class="ov" id="mu"><div class="panel" style="width:min(420px,100%)"><h2 id="mut"></h2><div id="mub" style="font-size:14px;color:#cdbb97"></div><div class="row" id="mur" style="flex-wrap:wrap"></div><div class="row"><button id="muc">Cancel</button></div></div></div>
+
+<div class="ov" id="sc"><div class="panel" style="width:min(940px,100%)"><h2 id="sct"></h2><div style="font-size:13px;color:#cdbb97">Top of your library is on the left. Move cards with the arrows, or send them to the bottom.</div><div id="scg" style="display:flex;gap:10px;overflow:auto;padding:6px 2px"></div><div class="row"><button id="scd">Done</button><button id="scx">Cancel</button></div></div></div>
+
 <div class="ov" id="net"><div class="panel">
   <h2>Play online</h2>
   <input type="search" id="nname" placeholder="Your name" autocomplete="off">
@@ -183,7 +209,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 <script>
 const $=s=>document.querySelector(s), CW=96, CH=134;
 let lastMissing=[];
-let S={lib:[],hand:[],bf:[],gy:[],ex:[],cmd:[],land:[],life:20,deck:[]}, uid=0;
+let S={lib:[],hand:[],bf:[],gy:[],ex:[],cmd:[],land:[],mull:0,cd:{},life:20,deck:[]}, uid=0;
 const ZN={lib:'Library',hand:'Hand',bf:'Battlefield',gy:'Graveyard',ex:'Exile',cmd:'Command',land:'Lands'};
 
 const ptOf=c=>{const f=c.power!=null?c:(c.card_faces&&c.card_faces[0]);return f&&f.power!=null?f.power+'/'+f.toughness:''};
@@ -247,7 +273,7 @@ async function loadDeck(text){
 function newGame(){
   const all=S.deck.map(c=>({id:++uid,name:c.name,img:c.img,pt:c.pt||'',tokens:c.tokens||[],cn:{},x:0,y:0,t:false,cmd:!!c.cmd,land:!!c.land,mana:c.mana||[],faces:c.faces||null,face:0}));
   S.lib=all.filter(c=>!c.cmd);S.cmd=all.filter(c=>c.cmd);
-  S.hand=[];S.bf=[];S.land=[];S.gy=[];S.ex=[];shuffle(S.lib);
+  S.mull=0;S.cd={};S.hand=[];S.bf=[];S.land=[];S.gy=[];S.ex=[];shuffle(S.lib);
   for(let i=0;i<7;i++)draw();
   render();
 }
@@ -344,6 +370,8 @@ document.addEventListener('pointerup',e=>{
   const d=drag;drag=null;document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));$('#lands').classList.remove('hl');
   if(d.moved){
     clearTimeout(pk);pk=setTimeout(hidePeek,3000);
+    const ofe=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x.classList&&x.classList.contains('ofield'));
+    if(ofe){giveCard(d.id,ofe.dataset.pid,e.clientX,e.clientY);return}
     let z=zoneAt(e.clientX,e.clientY);
     if(!z){render();return}
     if(z==='bf'){const mr=$('#mine').getBoundingClientRect();if(e.clientX<mr.left||e.clientX>mr.right||e.clientY<mr.top||e.clientY>mr.bottom){render();return}}
@@ -495,27 +523,29 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, icon bar v5';
+const BUILD='Build: Oct 23, turn order and card passing v8';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
 let pz=null;const ptr=new Map();
-let viewing=null,zm=1,pan={x:0,y:0},FW=0,FH=0,pd=null,justPanned=0;const G=40;
+let T={p:null,n:0,ts:0},viewing=null,zm=1,pan={x:0,y:0},FW=0,FH=0,pd=null,justPanned=0;const G=40;
 let NET={peer:null,id:'',conns:[],host:false,code:'',name:'',players:{}},st=null,oppId=null,ozone=null;
 const status=t=>{$('#nstat').textContent=t};
 const cs=c=>({n:c.name,i:c.img,p:curPT(c),t:c.t?1:0,cn:c.cn||{},k:c.token?1:0,x:c.x,y:c.y});
 const zs=a=>a.map(c=>({n:c.name,i:c.img}));
-function mySnap(){const r=$('#mine').getBoundingClientRect();return{name:NET.name,life:S.life,w:FW,h:FH,hand:S.hand.length,lib:S.lib.length,bf:S.bf.map(cs),land:S.land.map(cs),gy:zs(S.gy),ex:zs(S.ex),cmd:zs(S.cmd)}}
+function mySnap(){const r=$('#mine').getBoundingClientRect();return{name:NET.name,life:S.life,cd:S.cd,w:FW,h:FH,hand:S.hand.length,lib:S.lib.length,bf:S.bf.map(cs),land:S.land.map(cs),gy:zs(S.gy),ex:zs(S.ex),cmd:zs(S.cmd)}}
 function sync(){if(!NET.id)return;const m={t:'snap',id:NET.id,snap:mySnap()};NET.conns.forEach(c=>c.open&&c.send(m))}
 function queueSync(){if(!NET.id)return;clearTimeout(st);st=setTimeout(sync,200)}
-function gotPlayers(){renderPlayers();renderOpps();if($('#opp').classList.contains('on'))fillOpp()}
+function gotPlayers(){renderPlayers();renderOpps();if($('#opp').classList.contains('on'))fillOpp();if($('#cd').classList.contains('on'))fillCd()}
 function onMsg(m,c){
   if(m.t==='snap'){
     if(NET.host){c.pid=m.id;NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m))}
     if(!NET.players[m.id])sysMsg(m.snap.name+' joined');NET.players[m.id]=m.snap;gotPlayers();
-  }else if(m.t==='all'){Object.assign(NET.players,m.players);delete NET.players[NET.id];gotPlayers()}
+  }else if(m.t==='all'){Object.assign(NET.players,m.players);delete NET.players[NET.id];if(m.turn)applyTurn(m.turn);gotPlayers()}
   else if(m.t==='bye'){if(NET.players[m.id])sysMsg(NET.players[m.id].name+' left');delete NET.players[m.id];gotPlayers()}
   else if(m.t==='chat'){if(NET.host)NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m));pushChat({name:m.name,text:m.text})}
+  else if(m.t==='turn'){if(NET.host)NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m));applyTurn(m.turn)}
+  else if(m.t==='give'){if(m.to===NET.id)receiveCard(m);else if(NET.host)sendTo(m)}
 }
 function drop(c){
   NET.conns=NET.conns.filter(x=>x!==c);
@@ -531,7 +561,7 @@ function hostRoom(){
   const pr=NET.peer=new Peer('mtgtab-'+NET.code);
   pr.on('open',id=>{NET.id=id;$('#netc').textContent=NET.code;status('Room '+NET.code+' is open. Tell your friends this code.')});
   pr.on('connection',c=>{
-    c.on('open',()=>{NET.conns.push(c);c.send({t:'all',players:{...NET.players,[NET.id]:mySnap()}})});
+    c.on('open',()=>{NET.conns.push(c);c.send({t:'all',players:{...NET.players,[NET.id]:mySnap()},turn:T})});
     c.on('data',m=>onMsg(m,c));c.on('close',()=>drop(c));
   });
   pr.on('error',e=>status('Network problem: '+e.type));
@@ -590,18 +620,18 @@ function renderPlayers(){
   const b=$('#pchips');b.innerHTML='';
   const ids=Object.keys(NET.players);if(!ids.length)return;
   b.append(mkb('My field',()=>goTo(NET.id)));
-  ids.forEach(id=>{const p=NET.players[id];b.append(mkb(p.name+'  '+p.life+' life · '+p.hand+' in hand',()=>{
+  ids.forEach(id=>{const p=NET.players[id];const bt=mkb(p.name+'  '+p.life+' life · '+p.hand+' in hand',()=>{
     if(viewing===id){oppId=id;ozone=null;fillOpp();$('#opp').classList.add('on')}else goTo(id);
-  }))});
+  });if(T.p===id)bt.classList.add('turn');b.append(bt)});
   b.querySelectorAll('button').forEach(x=>x.classList.add('chip'));
 }
 function renderOpps(){
   const w=$('#world');w.querySelectorAll('.ofield').forEach(e=>e.remove());
   seats().forEach(t=>{
     const p=NET.players[t.id];if(!p)return;
-    const f=document.createElement('div');f.className='ofield';
+    const f=document.createElement('div');f.className='ofield';f.dataset.pid=t.id;
     f.style.cssText='left:'+(t.cx-FW/2)+'px;top:'+(t.cy-FH/2)+'px;width:'+FW+'px;height:'+FH+'px;transform:rotate('+t.rot+'deg)';
-    const LH=70,sc=Math.min(FW/p.w,(FH-LH)/p.h),lay=document.createElement('div');
+    if(T.p===t.id)f.style.borderColor='#e3b95a';const LH=70,sc=Math.min(FW/p.w,(FH-LH)/p.h),lay=document.createElement('div');
     lay.className='olayer';lay.style.cssText='width:'+p.w+'px;height:'+p.h+'px;transform:scale('+sc+');transform-origin:top left';
     p.bf.forEach(c=>{
       const e=mini(c);e.style.left=c.x+'px';e.style.top=c.y+'px';lay.append(e);
@@ -653,6 +683,137 @@ $('#bNet').onclick=()=>$('#net').classList.add('on');
 $('#nclose').onclick=()=>$('#net').classList.remove('on');
 $('#nhost').onclick=hostRoom;$('#njoin').onclick=joinRoom;$('#nleave').onclick=()=>leave();
 $('#oclose').onclick=()=>$('#opp').classList.remove('on');
+
+/* ---- turn order ---- */
+const turnIds=()=>NET.id?[NET.id,...Object.keys(NET.players)].sort():['solo'];
+const nameOf=id=>id==='solo'?'You':id===NET.id?(NET.name||'You'):(NET.players[id]?NET.players[id].name:'Player');
+function renderTurn(){
+  const b=$('#turnb'),mine=T.p===(NET.id||'solo');
+  if(!T.p)b.style.display='none';
+  else{b.style.display='block';b.className=mine?'me':'';b.id='turnb';b.textContent='Turn '+T.n+' · '+(mine?'your turn':nameOf(T.p)+"'s turn")}
+  $('#mine').classList.toggle('turn',!!T.p&&mine);
+  renderPlayers();renderOpps();
+}
+function applyTurn(t){if(!t||t.ts<=T.ts)return;T=t;renderTurn()}
+function setTurn(p){
+  T={p,n:(T.n||0)+(p===T.p?0:1),ts:Date.now()};
+  NET.conns.forEach(c=>c.open&&c.send({t:'turn',turn:T}));
+  renderTurn();
+}
+$('#bTurn').onclick=()=>{
+  const ids=turnIds(),nxt=ids[(ids.indexOf(T.p)+1)%ids.length],btns=[];
+  if(T.p)btns.push(['Pass to '+nameOf(nxt),()=>setTurn(nxt)]);
+  ids.filter(id=>!T.p||id!==nxt).forEach(id=>btns.push([T.p?'Set '+nameOf(id)+"'s turn":'Start with '+nameOf(id),()=>setTurn(id)]));
+  menu('Turn order',T.p?'Turn '+T.n+': '+nameOf(T.p)+"'s turn. Turns pass clockwise. Nothing is locked, so anyone can still move cards.":'No turn set yet. Pick who goes first.',btns);
+};
+
+/* ---- passing cards to another player ---- */
+function sendTo(m){
+  if(NET.host){const tc=NET.conns.find(x=>x.pid===m.to);if(tc&&tc.open){tc.send(m);return true}return false}
+  const h=NET.conns[0];if(h&&h.open){h.send(m);return true}return false;
+}
+function giveCard(id,pid,cx,cy){
+  const f=find(id),p=NET.players[pid],t=seats().find(t=>t.id===pid);
+  render();
+  if(!f||!p||!t)return;
+  const c=S[f[0]][f[1]],r=$('#bf').getBoundingClientRect(),th=t.rot*Math.PI/180;
+  const dx=(cx-r.left-pan.x)/zm-t.cx,dy=(cy-r.top-pan.y)/zm-t.cy;
+  const lx=dx*Math.cos(th)+dy*Math.sin(th)+FW/2,ly=-dx*Math.sin(th)+dy*Math.cos(th)+FH/2;
+  const sc=Math.min(FW/p.w,(FH-70)/p.h);
+  const x=Math.max(0,Math.min(p.w-CW,lx/sc-CW/2)),y=Math.max(34,Math.min(p.h-CH,ly/sc-CH/2));
+  menu('Give card','Give '+c.name+' to '+p.name+'? It leaves your game and appears on their table.',[['Yes, give it',()=>doGive(id,pid,x,y)]]);
+}
+function doGive(id,pid,x,y){
+  const f=find(id);if(!f)return;const c=S[f[0]][f[1]];
+  const card={name:c.name,img:c.img,pt:c.pt,tokens:c.tokens||[],cn:c.cn||{},token:!!c.token,land:!!c.land,mana:c.mana||[],faces:c.faces||null,face:c.face||0,t:c.t?1:0};
+  if(!sendTo({t:'give',to:pid,from:NET.name,card,x,y})){sysMsg('Could not reach '+nameOf(pid)+'. The card stayed with you.');return}
+  S[f[0]].splice(f[1],1);render();sysMsg('You gave '+c.name+' to '+nameOf(pid));
+}
+function receiveCard(m){
+  const k=m.card,c={id:++uid,name:k.name,img:k.img,pt:k.pt||'',tokens:k.tokens||[],cn:k.cn||{},token:k.token,land:k.land,mana:k.mana||[],faces:k.faces,face:k.face||0,t:!!k.t,x:0,y:0};
+  if(c.land)S.land.push(c);
+  else{c.x=Math.max(0,Math.min(FW-CW,m.x));c.y=Math.max(34,Math.min(FH-CH,m.y));S.bf.push(c)}
+  sysMsg((m.from||'Someone')+' gave you '+c.name);render();
+}
+
+/* ---- commander damage ---- */
+function fillCd(){
+  const b=$('#cdr');b.innerHTML='';
+  const rows=Object.entries(NET.players).map(([id,p])=>[id,p.name,p]);
+  if(!rows.length)rows.push(['manual','Opponent',null]);
+  rows.forEach(([id,name,p])=>{
+    const n=S.cd[id]||0,row=document.createElement('div');row.className='crow';
+    const l=document.createElement('span');l.textContent=name;
+    const note=(t,c)=>{const sm=document.createElement('small');sm.textContent=t;sm.style.cssText='display:block;font-size:11px;color:'+c;l.append(sm)};
+    if(n>=21)note('Lethal commander damage','#ff9b8a');
+    if(p&&p.cd&&p.cd[NET.id])note('Your commander has dealt '+p.cd[NET.id]+' to them','#8d7a5c');
+    const v=document.createElement('b');v.textContent=n;if(n>=21)v.style.color='#ff8a7a';
+    row.append(l,mkb('−',()=>bumpCd(id,-1)),v,mkb('+',()=>bumpCd(id,1)));
+    b.append(row);
+  });
+}
+function bumpCd(id,d){
+  const o=S.cd[id]||0,n=Math.max(0,o+d);if(n===o)return;
+  S.cd[id]=n;if($('#cdl').checked)S.life-=n-o;
+  render();fillCd();
+}
+$('#bCd').onclick=()=>{fillCd();$('#cd').classList.add('on')};
+$('#cdx').onclick=()=>$('#cd').classList.remove('on');
+
+/* ---- mulligan + scry ---- */
+function menu(title,text,btns){
+  $('#mut').textContent=title;$('#mub').textContent=text;
+  const r=$('#mur');r.innerHTML='';
+  btns.forEach(([t,f])=>r.append(mkb(t,()=>{$('#mu').classList.remove('on');f()})));
+  $('#mu').classList.add('on');
+}
+$('#muc').onclick=()=>$('#mu').classList.remove('on');
+function doMull(free){
+  if(!S.hand.length&&!S.lib.length)return;
+  if(!free)S.mull++;
+  S.lib.push(...S.hand);S.hand=[];shuffle(S.lib);
+  const n=Math.max(0,7-S.mull);for(let i=0;i<n;i++)draw();
+  render();
+}
+$('#bMull').onclick=()=>{
+  const n=7-S.mull;
+  menu('Mulligan','Mulligans taken: '+S.mull+'. A free mulligan draws '+n+'. A normal mulligan draws '+Math.max(0,n-1)+'.',[['Free mulligan',()=>doMull(true)],['Mulligan',()=>doMull(false)]]);
+};
+$('#bScry').onclick=()=>{
+  if(!S.lib.length){menu('Scry','Your library is empty.',[]);return}
+  menu('Scry','How many cards?',[1,2,3,4,5].map(n=>['Scry '+n,()=>openScry(n)]));
+  const i=document.createElement('input');i.type='number';i.min=1;i.value=6;i.style.width='84px';
+  $('#mur').append(i,mkb('Scry',()=>{const n=parseInt(i.value);if(n>0){$('#mu').classList.remove('on');openScry(n)}}));
+};
+let SCL=[];
+function openScry(n){
+  n=Math.min(n,S.lib.length);
+  SCL=S.lib.slice(-n).reverse().map(c=>({c,b:false}));
+  $('#sct').textContent='Scry '+n;fillScry();$('#sc').classList.add('on');
+}
+function fillScry(){
+  const g=$('#scg');g.innerHTML='';
+  SCL.forEach((o,i)=>{
+    const t=document.createElement('div');t.className='sct'+(o.b?' bot':'');
+    const pic=document.createElement('div');pic.className='pic';
+    if(o.c.img){const im=document.createElement('img');im.src=o.c.img;im.alt=o.c.name;pic.append(im)}else pic.textContent=o.c.name;
+    pic.onclick=()=>peekRaw(o.c.img,o.c.name);
+    const r=document.createElement('div');r.className='row';
+    r.append(
+      mkb('◀',()=>{if(i>0){[SCL[i-1],SCL[i]]=[SCL[i],SCL[i-1]];fillScry()}}),
+      mkb(o.b?'Bottom':'Top',()=>{o.b=!o.b;fillScry()}),
+      mkb('▶',()=>{if(i<SCL.length-1){[SCL[i+1],SCL[i]]=[SCL[i],SCL[i+1]];fillScry()}}));
+    t.append(pic,r);g.append(t);
+  });
+}
+$('#scd').onclick=()=>{
+  const n=SCL.length;S.lib.splice(S.lib.length-n,n);
+  const top=SCL.filter(o=>!o.b).map(o=>o.c),bot=SCL.filter(o=>o.b).map(o=>o.c);
+  for(let i=top.length-1;i>=0;i--)S.lib.push(top[i]);
+  S.lib.unshift(...bot);
+  $('#sc').classList.remove('on');render();
+};
+$('#scx').onclick=()=>$('#sc').classList.remove('on');
 
 /* ---- chat ---- */
 const CHL=[];let unread=0;
