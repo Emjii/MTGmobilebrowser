@@ -220,6 +220,15 @@ body.noanim *{animation:none!important}
   <div class="row"><button id="nhost">Create room</button></div>
   <div class="row"><input type="search" id="ncode" placeholder="Room code" autocapitalize="characters" autocomplete="off"><button id="njoin">Join</button></div>
   <div id="nstat" style="font-size:14px;color:var(--gold);min-height:20px">Your hand and library stay private. Friends only see your table.</div>
+  <details style="font-size:14px"><summary style="cursor:pointer;color:var(--gold)">Relay server (fixes most connection problems)</summary>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+      <div style="font-size:12px;color:#cdbb97">Some Wi-Fi networks block devices from reaching each other. A free relay from metered.ca (Open Relay) fixes that. Make a free account, then copy the server address, username and credential from its dashboard. Enter the same on every device.</div>
+      <input type="search" id="tUrl" placeholder="Server, e.g. global.relay.metered.ca" autocomplete="off" autocapitalize="off">
+      <input type="search" id="tUser" placeholder="Username" autocomplete="off" autocapitalize="off">
+      <input type="search" id="tCred" placeholder="Credential" autocomplete="off" autocapitalize="off">
+      <div class="row"><button id="tsave">Save relay</button><button id="tclear">Remove</button></div>
+    </div>
+  </details>
   <label style="display:flex;gap:10px;align-items:center;font-size:14px"><input type="checkbox" id="anim" checked style="width:22px;height:22px;accent-color:#e3b95a">Animations</label>
   <div class="ver"></div>
   <div class="row"><button id="nleave">Leave room</button><button id="nclose">Close</button></div>
@@ -574,7 +583,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, drag and placement fix v13';
+const BUILD='Build: Oct 23, relay settings v14';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -612,29 +621,34 @@ function startNet(){
 function hostRoom(){
   if(!startNet())return;
   NET.host=true;NET.code=Math.random().toString(36).slice(2,7).toUpperCase();
-  const pr=NET.peer=new Peer('mtgtab-'+NET.code);
+  const pr=NET.peer=new Peer('mtgtab-'+NET.code,iceConfig());
   pr.on('open',id=>{NET.id=id;$('#netc').textContent=NET.code;status('Room '+NET.code+' is open. Tell your friends this code.')});
   pr.on('connection',c=>{
+    status('Someone is connecting…');
+    c.on('iceStateChanged',st=>{if(st==='failed')status('A player could not connect directly. Add a relay server in this panel, on both devices.')});
     c.on('open',()=>{NET.conns.push(c);c.send({t:'all',players:{...NET.players,[NET.id]:mySnap()},turn:T})});
     c.on('data',m=>onMsg(m,c));c.on('close',()=>drop(c));
   });
   pr.on('error',e=>status('Network problem: '+e.type));
+  pr.on('disconnected',()=>status('Lost contact with the matchmaking server. Check your internet connection.'));
 }
 function joinRoom(){
   const code=$('#ncode').value.trim().toUpperCase();
   if(!code){status('Type the room code first.');return}
   if(!startNet())return;
   NET.host=false;NET.code=code;
-  const pr=NET.peer=new Peer();
+  const pr=NET.peer=new Peer(undefined,iceConfig());
   pr.on('open',id=>{
-    NET.id=id;status('Joining room '+code+'…');
+    NET.id=id;status('Reached the matchmaking server. Contacting the host…');
     const c=pr.connect('mtgtab-'+code,{reliable:true});NET.conns=[c];
-    const to=setTimeout(()=>{if(!c.open)status('Could not connect yet. Turn off any VPN on either device, make sure both are on the same Wi-Fi, and check the room code.')},12000);
+    c.on('iceStateChanged',st=>{if(st==='checking')status('Connecting to room '+code+'…');if(st==='failed')status('Direct connection failed. Your Wi-Fi may block devices from reaching each other. Add a relay server in this panel, on both devices.')});
+    const to=setTimeout(()=>{if(!c.open)status('Could not connect yet. Check for a VPN, that both devices are online, and the room code. If it still fails, add a relay server in this panel.')},15000);
     c.on('open',()=>{clearTimeout(to);$('#netc').textContent=code;status('Connected to room '+code+'.');sync()});
     c.on('data',m=>onMsg(m,c));
     c.on('close',()=>{NET.players={};gotPlayers();status('The host left the room.');$('#netc').textContent=''});
   });
-  pr.on('error',e=>status(e.type==='peer-unavailable'?'No room with that code.':'Network problem: '+e.type));
+  pr.on('error',e=>status(e.type==='peer-unavailable'?'No room with that code. Check the code, and that the host still has the page open.':'Network problem: '+e.type));
+  pr.on('disconnected',()=>status('Lost contact with the matchmaking server. Check your internet connection.'));
 }
 function leave(quiet){
   if(NET.peer)try{NET.peer.destroy()}catch(e){}
@@ -741,6 +755,23 @@ function fillOz(){
 $('#bNet').onclick=()=>$('#net').classList.add('on');
 $('#nclose').onclick=()=>$('#net').classList.remove('on');
 $('#nhost').onclick=hostRoom;$('#njoin').onclick=joinRoom;$('#nleave').onclick=()=>leave();
+function iceConfig(){
+  const ice=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+  let t=null;try{t=JSON.parse(localStorage.getItem('mtg_turn')||'null')}catch(e){}
+  if(t&&t.h&&t.u&&t.c){
+    const h=t.h.replace(/^(turns?|stun):/,'').replace(/[:/?].*$/,'');
+    ['turn:'+h+':80','turn:'+h+':80?transport=tcp','turn:'+h+':443','turns:'+h+':443?transport=tcp'].forEach(u=>ice.push({urls:u,username:t.u,credential:t.c}));
+  }
+  return{config:{iceServers:ice}};
+}
+try{const t=JSON.parse(localStorage.getItem('mtg_turn')||'null');if(t){$('#tUrl').value=t.h||'';$('#tUser').value=t.u||'';$('#tCred').value=t.c||''}}catch(e){}
+$('#tsave').onclick=()=>{
+  const t={h:$('#tUrl').value.trim(),u:$('#tUser').value.trim(),c:$('#tCred').value.trim()};
+  if(!t.h||!t.u||!t.c){status('Fill in the server, username and credential.');return}
+  try{localStorage.setItem('mtg_turn',JSON.stringify(t))}catch(e){}
+  status('Relay saved on this device. Create or join a room again to use it.');
+};
+$('#tclear').onclick=()=>{try{localStorage.removeItem('mtg_turn')}catch(e){}$('#tUrl').value=$('#tUser').value=$('#tCred').value='';status('Relay removed.')};
 $('#oclose').onclick=()=>$('#opp').classList.remove('on');
 
 /* ---- visual feedback ---- */
