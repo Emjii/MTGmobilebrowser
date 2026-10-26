@@ -35,7 +35,7 @@ button.z b{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padd
 .ov img{max-height:86vh;max-width:92vw;border-radius:16px}
 .panel{background:#2a1a0e;border:1px solid #7d5733;border-radius:14px;padding:16px;width:min(640px,100%);max-height:88vh;display:flex;flex-direction:column;gap:10px}
 .panel h2{margin:0;font-size:20px;font-weight:400}
-textarea{width:100%;height:220px;background:#160d06;color:var(--ink);border:1px solid #7d5733;border-radius:8px;padding:10px;font:14px ui-monospace,Menlo,monospace;user-select:text;-webkit-user-select:text}
+textarea{width:100%;height:min(220px,24vh);background:#160d06;color:var(--ink);border:1px solid #7d5733;border-radius:8px;padding:10px;font:14px ui-monospace,Menlo,monospace;user-select:text;-webkit-user-select:text}
 .row{display:flex;gap:8px;align-items:center}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;overflow:auto}
 .grid img{width:100%;border-radius:6px}
@@ -146,6 +146,12 @@ body.dragging .hl{outline:3px solid #e3b95a}
 .ofield.give{box-shadow:0 0 0 4px #e3b95a,inset 0 0 50px #e3b95a66}
 .ofield.give .olabel{color:#e3b95a}
 body.noanim *{animation:none!important}
+#decks{flex-direction:column;gap:6px;max-height:26vh;overflow:auto;border-bottom:1px solid #ffffff14;padding-bottom:8px}
+.drow{display:flex;gap:6px;align-items:center}
+.drow span{flex:1;min-width:0}
+.drow small{display:block;color:#8d7a5c;font-size:11px}
+.drow button{min-width:0;padding:6px 10px;min-height:40px;font-size:13px}
+.panel{overflow:auto}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
@@ -179,6 +185,7 @@ body.noanim *{animation:none!important}
 
 <div class="ov" id="imp"><div class="panel">
   <h2>Import a deck</h2>
+  <div id="decks" style="display:none"></div>
   <textarea id="list" spellcheck="false">4 Lightning Bolt
 4 Goblin Guide
 4 Monastery Swiftspear
@@ -188,6 +195,7 @@ body.noanim *{animation:none!important}
 4 Eidolon of the Great Revel
 4 Searing Spear
 28 Mountain</textarea>
+  <div class="row"><input type="search" id="dname" placeholder="Deck name to save" autocomplete="off"><button id="dsave">Save deck</button></div>
   <div id="msg">Paste a decklist or a Moxfield deck link. Sideboard lines are ignored.</div>
   <div class="ver"></div>
   <div class="row"><button id="go">Load deck</button><button id="restart">Restart game</button><button id="cancel">Close</button></div>
@@ -452,11 +460,11 @@ document.addEventListener('pointercancel',()=>{if(drag&&drag.ghost)drag.ghost.re
 let lastEnd=0;
 document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastEnd<350&&e.target.closest('#bf,#lands,#hand'))e.preventDefault();lastEnd=n},{passive:false});
 document.addEventListener('contextmenu',e=>e.preventDefault());
-document.addEventListener('touchmove',e=>{if(!e.target.closest('.grid,textarea,#cmsgs'))e.preventDefault()},{passive:false});
+document.addEventListener('touchmove',e=>{if(!e.target.closest('.grid,textarea,#cmsgs,#decks,.panel'))e.preventDefault()},{passive:false});
 
 /* ---- buttons ---- */
 $('#zoom').onclick=()=>$('#zoom').classList.remove('on');
-$('#bImport').onclick=()=>$('#imp').classList.add('on');
+$('#bImport').onclick=()=>{renderDecks();$('#imp').classList.add('on')};
 $('#cancel').onclick=()=>$('#imp').classList.remove('on');
 $('#go').onclick=async()=>{
   const b=$('#go');b.disabled=true;
@@ -467,7 +475,7 @@ $('#go').onclick=async()=>{
     if(!t){$('#msg').textContent='Could not load that link (Moxfield can block browsers). On Moxfield tap Export, copy the text list, and paste it here.';b.disabled=false;return}
     txt=t;$('#list').value=t;
   }
-  if(await loadDeck(txt)){if(!lastMissing.length)$('#imp').classList.remove('on');newGame()}b.disabled=false};
+  if(await loadDeck(txt)){$('#dname').value=suggestName();if(!lastMissing.length)$('#imp').classList.remove('on');newGame()}b.disabled=false};
 $('#restart').onclick=()=>{if(S.deck.length){newGame();$('#imp').classList.remove('on')}else $('#msg').textContent='Load a deck first.'};
 $('#bDraw').onclick=drawOne;
 $('#zLib').onclick=()=>openZone('lib');
@@ -583,7 +591,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, relay settings v14';
+const BUILD='Build: Oct 23, saved decks v15';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -947,6 +955,59 @@ function receiveCard(m){
   sysMsg((m.from||'Someone')+' gave you '+c.name);render();
   pulse(document.querySelector((c.land?'#lcards':'#mine')+' .card[data-id="'+c.id+'"]'),'pop');toast((m.from||'Someone')+' gave you '+c.name);
 }
+
+/* ---- saved decks (this device only) ---- */
+const DK='mtg_decks';
+function getDecks(){try{return JSON.parse(localStorage.getItem(DK)||'[]')}catch(e){return[]}}
+function putDecks(a){try{localStorage.setItem(DK,JSON.stringify(a));return true}catch(e){return false}}
+function packDeck(){
+  const m=new Map();
+  S.deck.forEach(c=>{
+    const k=c.name+'|'+(c.cmd?1:0),e=m.get(k);
+    if(e)e.n++;else m.set(k,{n:1,c:{name:c.name,img:c.img,pt:c.pt||'',tokens:c.tokens||[],land:!!c.land,mana:c.mana||[],faces:c.faces||null,cmd:!!c.cmd}});
+  });
+  return[...m.values()];
+}
+function unpackDeck(d){const out=[];d.cards.forEach(e=>{for(let i=0;i<e.n;i++)out.push(e.c)});return out}
+function suggestName(){const c=S.deck.find(c=>c.cmd);return c?c.name.split(' // ')[0]:''}
+function renderDecks(){
+  const box=$('#decks'),list=getDecks();box.innerHTML='';
+  if(!list.length){box.style.display='none';return}
+  box.style.display='flex';
+  const h=document.createElement('div');h.textContent='Saved decks on this device';h.style.cssText='font-size:13px;color:#cdbb97';box.append(h);
+  list.forEach(d=>{
+    const row=document.createElement('div');row.className='drow';
+    const nm=document.createElement('span');nm.textContent=d.name;
+    const sm=document.createElement('small');sm.textContent=d.cards.reduce((a,e)=>a+e.n,0)+' cards';nm.append(sm);
+    row.append(nm,mkb('Load',()=>loadSaved(d.id)),mkb('Rename',()=>renameDeck(d.id)),mkb('Delete',()=>delDeck(d.id)));
+    box.append(row);
+  });
+}
+function loadSaved(id){
+  const d=getDecks().find(x=>x.id===id);if(!d)return;
+  S.deck=unpackDeck(d);lastMissing=[];$('#dname').value=d.name;
+  newGame();$('#imp').classList.remove('on');
+}
+function renameDeck(id){
+  const list=getDecks(),d=list.find(x=>x.id===id);if(!d)return;
+  const n=prompt('New name for this deck',d.name);
+  if(n&&n.trim()){d.name=n.trim();putDecks(list);renderDecks()}
+}
+function delDeck(id){
+  const d=getDecks().find(x=>x.id===id);if(!d)return;
+  menu('Delete deck','Delete "'+d.name+'" from this device? This cannot be undone.',[['Delete',()=>{putDecks(getDecks().filter(x=>x.id!==id));renderDecks()}]]);
+}
+$('#dsave').onclick=()=>{
+  const msg=t=>{$('#msg').textContent=t};
+  if(!S.deck.length){msg('Load a deck first, then save it.');return}
+  const name=$('#dname').value.trim();
+  if(!name){msg('Type a name for this deck first.');return}
+  const list=getDecks(),ex=list.find(d=>d.name.toLowerCase()===name.toLowerCase());
+  const rec={id:ex?ex.id:Date.now().toString(36),name,ts:Date.now(),cards:packDeck()};
+  if(ex)Object.assign(ex,rec);else list.push(rec);
+  if(putDecks(list)){msg((ex?'Updated "':'Saved "')+name+'".');renderDecks()}
+  else msg('Could not save. This page has run out of storage space on this device.');
+};
 
 /* ---- commander damage ---- */
 function fillCd(){
