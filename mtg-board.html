@@ -249,6 +249,7 @@ const ptOf=c=>{const f=c.power!=null?c:(c.card_faces&&c.card_faces[0]);return f&
 const tokensOf=c=>{const seen={};return (c.all_parts||[]).filter(p=>p.component==='token'&&!seen[p.name]&&(seen[p.name]=1)).map(p=>({id:p.id,name:p.name}))};
 const facesOf=c=>{const f=c.card_faces;return f&&f.length>1&&f[0].image_uris&&f[1].image_uris?f.map(x=>({name:x.name,img:x.image_uris.normal,pt:x.power!=null?x.power+'/'+x.toughness:'',land:/\bLand\b/.test((x.type_line||'').split(' // ')[0])})):null};
 const entry=c=>({name:c.name,img:imgOf(c)||(c.id?'https://api.scryfall.com/cards/'+c.id+'?format=image&version=normal':''),pt:ptOf(c),tokens:tokensOf(c),land:/\bLand\b/.test((c.type_line||(c.card_faces&&c.card_faces[0].type_line)||'').split(' // ')[0]),mana:c.produced_mana||[],faces:facesOf(c)});
+const clX=(x,W=FW)=>Math.max(-CW*.6,Math.min(W-CW*.4,x)),clY=(y,H=FH)=>Math.max(-CH*.6,Math.min(H-CH*.4,y));
 const gid=c=>c.gid||(c.gid=Math.random().toString(36).slice(2,9));
 const BASIC={Plains:'W',Island:'U',Swamp:'B',Mountain:'R',Forest:'G'};
 const imgOf=c=>{const u=c.image_uris||(c.card_faces&&c.card_faces[0].image_uris);return u?u.normal:''};
@@ -353,7 +354,7 @@ function render(){
       cs.forEach(([n,v])=>{const i=document.createElement('i');i.textContent=n+' ×'+v;p.append(i)});
       bf.append(p);
     }
-    const mb=document.createElement('button');mb.className='more';mb.dataset.for=c.id;mb.textContent='…';mb.title='Card menu';mb.style.left=(c.x+CW)+'px';mb.style.top=(c.y-34)+'px';mb.onclick=()=>{showMore(c.id);cardMenu(c,mb)};bf.append(mb);
+    const mb=document.createElement('button');mb.className='more';mb.dataset.for=c.id;mb.textContent='…';mb.title='Card menu';mb.style.left=Math.min(c.x+CW,FW-6)+'px';mb.style.top=Math.max(0,c.y-34)+'px';mb.onclick=()=>{showMore(c.id);cardMenu(c,mb)};bf.append(mb);
   });
   $('#bf .hint').style.display=(S.bf.length||Object.keys(NET.players).length)?'none':'grid';
   syncMore();
@@ -391,10 +392,11 @@ document.addEventListener('pointermove',e=>{
   if(!drag)return;
   if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>8){
     drag.moved=true;clearTimeout(timer);
-    drag.el.classList.add('drag');drag.el.style.width=CW+'px';drag.el.style.height=CH+'px';showPeek(drag.id,true);document.body.classList.add('dragging');document.querySelectorAll('[data-for="'+drag.id+'"]').forEach(e=>e.style.display='none');
+    const gh=drag.el.cloneNode(true);gh.classList.remove('t');gh.classList.add('drag');gh.removeAttribute('data-id');gh.style.cssText='width:'+CW+'px;height:'+CH+'px';document.body.append(gh);drag.ghost=gh;drag.el.style.opacity='.25';
+    showPeek(drag.id,true);document.body.classList.add('dragging');document.querySelectorAll('[data-for="'+drag.id+'"]').forEach(e=>e.style.display='none');
   }
   if(drag.moved){
-    drag.el.style.left=(e.clientX-CW/2)+'px';drag.el.style.top=(e.clientY-CH/2)+'px';
+    drag.ghost.style.left=(e.clientX-CW/2)+'px';drag.ghost.style.top=(e.clientY-CH/2)+'px';
     const z=zoneAt(e.clientX,e.clientY);
     document.querySelectorAll('.z').forEach(b=>b.classList.toggle('hl',b.dataset.zone===z));
     const fcz=find(drag.id),cz=fcz&&S[fcz[0]][fcz[1]],ofz=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x.classList&&x.classList.contains('ofield'));
@@ -407,6 +409,7 @@ document.addEventListener('pointerup',e=>{
   if(!drag)return;clearTimeout(timer);
   const d=drag;drag=null;document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));$('#lands').classList.remove('hl');endDragFx();
   if(d.moved){
+    d.fr=d.ghost.getBoundingClientRect();d.ghost.remove();
     clearTimeout(pk);pk=setTimeout(hidePeek,3000);
     const ofe=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x.classList&&x.classList.contains('ofield'));
     if(ofe){giveCard(d.id,ofe.dataset.pid,e.clientX,e.clientY);return}
@@ -417,10 +420,10 @@ document.addEventListener('pointerup',e=>{
     if(cd){if(z==='bf'&&cd.land)z='land';else if(z==='land'&&!cd.land)z='bf'}
     if(z==='bf'){
       const r=$('#mine').getBoundingClientRect();
-      move(d.id,'bf',Math.max(0,Math.min(FW-CW,(e.clientX-r.left)/zm-CW/2)),Math.max(34,Math.min(FH-CH,(e.clientY-r.top)/zm-CH/2)));
+      move(d.id,'bf',clX((e.clientX-r.left)/zm-CW/2),clY((e.clientY-r.top)/zm-CH/2));
       showMore(d.id);
     }else{
-      const fr=d.el.getBoundingClientRect(),fc=find(d.id),cc=fc&&S[fc[0]][fc[1]];
+      const fr=d.fr,fc=find(d.id),cc=fc&&S[fc[0]][fc[1]];
       move(d.id,z);
       if(z==='land')showMore(d.id);
       else if(z==='hand'){if(cc&&!cc.token)flyIn($('#hand .card:last-child'),fr)}
@@ -435,7 +438,7 @@ document.addEventListener('pointerup',e=>{
     else{lastTap={id:d.id,t:now};showPeek(d.id)}
   }
 });
-document.addEventListener('pointercancel',()=>{drag=null;endDragFx();clearTimeout(timer);render()});
+document.addEventListener('pointercancel',()=>{if(drag&&drag.ghost)drag.ghost.remove();drag=null;endDragFx();clearTimeout(timer);render()});
 ['gesturestart','gesturechange','gestureend','dblclick'].forEach(t=>document.addEventListener(t,e=>e.preventDefault()));
 let lastEnd=0;
 document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastEnd<350&&e.target.closest('#bf,#lands,#hand'))e.preventDefault();lastEnd=n},{passive:false});
@@ -542,7 +545,7 @@ function cardMenu(c,btn){
 function dup(c){
   const f=find(c.id),r=$('#mine').getBoundingClientRect();
   if(f&&f[0]==='land'){S.land.push({...c,id:++uid,gid:null,cn:{...(c.cn||{})},token:true,t:false});render();return}
-  S.bf.push({...c,id:++uid,gid:null,cn:{...(c.cn||{})},token:true,x:Math.max(0,Math.min(FW-CW,c.x+24)),y:Math.max(34,Math.min(FH-CH,c.y+24))});
+  S.bf.push({...c,id:++uid,gid:null,cn:{...(c.cn||{})},token:true,x:clX(c.x+24),y:clY(c.y+24)});
   render();
 }
 async function summon(c,t){
@@ -571,7 +574,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, visual feedback v11';
+const BUILD='Build: Oct 23, drag and placement fix v13';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -626,7 +629,8 @@ function joinRoom(){
   pr.on('open',id=>{
     NET.id=id;status('Joining room '+code+'…');
     const c=pr.connect('mtgtab-'+code,{reliable:true});NET.conns=[c];
-    c.on('open',()=>{$('#netc').textContent=code;status('Connected to room '+code+'.');sync()});
+    const to=setTimeout(()=>{if(!c.open)status('Could not connect yet. Turn off any VPN on either device, make sure both are on the same Wi-Fi, and check the room code.')},12000);
+    c.on('open',()=>{clearTimeout(to);$('#netc').textContent=code;status('Connected to room '+code+'.');sync()});
     c.on('data',m=>onMsg(m,c));
     c.on('close',()=>{NET.players={};gotPlayers();status('The host left the room.');$('#netc').textContent=''});
   });
@@ -894,7 +898,7 @@ function giveCard(id,pid,cx,cy){
   const dx=(cx-r.left-pan.x)/zm-t.cx,dy=(cy-r.top-pan.y)/zm-t.cy;
   const lx=dx*Math.cos(th)+dy*Math.sin(th)+FW/2,ly=-dx*Math.sin(th)+dy*Math.cos(th)+FH/2;
   const sc=Math.min(FW/p.w,(FH-70)/p.h);
-  const x=Math.max(0,Math.min(p.w-CW,lx/sc-CW/2)),y=Math.max(34,Math.min(p.h-CH,ly/sc-CH/2));
+  const x=clX(lx/sc-CW/2,p.w),y=clY(ly/sc-CH/2,p.h);
   menu('Give card','Give '+c.name+' to '+p.name+'? It leaves your game and appears on their table.',[['Yes, give it',()=>doGive(id,pid,x,y)]]);
 }
 function doGive(id,pid,x,y){
@@ -908,7 +912,7 @@ function doGive(id,pid,x,y){
 function receiveCard(m){
   const k=m.card,c={id:++uid,name:k.name,img:k.img,pt:k.pt||'',tokens:k.tokens||[],cn:k.cn||{},token:k.token,land:k.land,mana:k.mana||[],faces:k.faces,face:k.face||0,t:!!k.t,x:0,y:0};
   if(c.land)S.land.push(c);
-  else{c.x=Math.max(0,Math.min(FW-CW,m.x));c.y=Math.max(34,Math.min(FH-CH,m.y));S.bf.push(c)}
+  else{c.x=clX(m.x);c.y=clY(m.y);S.bf.push(c)}
   sysMsg((m.from||'Someone')+' gave you '+c.name);render();
   pulse(document.querySelector((c.land?'#lcards':'#mine')+' .card[data-id="'+c.id+'"]'),'pop');toast((m.from||'Someone')+' gave you '+c.name);
 }
