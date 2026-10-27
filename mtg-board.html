@@ -7,10 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-:root{--felt:#14352c;--felt2:#0f2a23;--wood:#3b2616;--gold:#e3b95a;--ink:#f3ead7;--w:96px;--h:134px;color-scheme:dark}
+:root{--felt:#14352c;--felt2:#0f2a23;--wood:#3b2616;--gold:#e3b95a;--ink:#f3ead7;--w:80px;--h:112px;color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 html,body{touch-action:manipulation;margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--wood);color:var(--ink);font:15px/1.3 Georgia,"Iowan Old Style",serif}
-#app{display:grid;grid-template-rows:auto 1fr 142px 168px;height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#app{display:grid;grid-template-rows:auto 1fr 142px 190px;height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--wood);flex-wrap:wrap}
 button{font:inherit;color:var(--ink);background:#5a3b22;border:1px solid #7d5733;border-radius:8px;padding:9px 14px;min-height:44px;touch-action:manipulation}
 button:active{background:#7d5733}
@@ -120,7 +120,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 #bCd{margin-left:auto}
 .life{margin-left:0}
 @media (hover:hover){#bf{cursor:grab}.card[data-id]{cursor:grab}.card.drag{cursor:grabbing}button{cursor:pointer}}
-.fly{position:fixed;left:0;top:0;width:96px;height:134px;z-index:150;pointer-events:none;border-radius:7px;overflow:hidden;background:#222;box-shadow:0 8px 20px #000a;font-size:12px;transform-origin:center}
+.fly{position:fixed;left:0;top:0;width:80px;height:112px;z-index:150;pointer-events:none;border-radius:7px;overflow:hidden;background:#222;box-shadow:0 8px 20px #000a;font-size:12px;transform-origin:center}
 .fly img{width:100%;height:100%;display:block;object-fit:cover;object-position:left top}
 @keyframes pulse{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
 .pulse{animation:pulse .5s ease}
@@ -139,7 +139,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 .chip .delta{top:-16px}
 .delta.up{color:#8be39b}.delta.down{color:#ff8a7a}
 @keyframes floatup{0%{opacity:0;transform:translate(-50%,0)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-34px)}}
-#toast{position:fixed;left:50%;bottom:190px;transform:translate(-50%,10px);z-index:160;background:#000d;border:1px solid #7d5733;border-radius:16px;padding:8px 16px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:80vw;text-align:center}
+#toast{position:fixed;left:50%;bottom:210px;transform:translate(-50%,10px);z-index:160;background:#000d;border:1px solid #7d5733;border-radius:16px;padding:8px 16px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:80vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 body.dragging .z,body.dragging #lands,body.dragging #hand{outline:2px dashed #e3b95a88;outline-offset:-3px}
 body.dragging .hl{outline:3px solid #e3b95a}
@@ -152,6 +152,17 @@ body.noanim *{animation:none!important}
 .drow small{display:block;color:#8d7a5c;font-size:11px}
 .drow button{min-width:0;padding:6px 10px;min-height:40px;font-size:13px}
 .panel{overflow:auto}
+.card.pile{box-shadow:3px 3px 0 #1b1008,6px 6px 0 #120a04,0 3px 8px #000a}
+.cnt{position:absolute;top:4px;left:4px;z-index:2;background:#000c;color:var(--gold);border:1px solid #7d5733;border-radius:10px;padding:0 7px;font-size:13px;line-height:18px}
+.card.armed{outline:3px solid var(--gold);outline-offset:-3px}
+#handbar{position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:4;display:flex;flex-direction:column;gap:4px}
+#handbar button{width:40px;height:40px;min-width:0;min-height:0;padding:0;display:grid;place-items:center}
+#handbar svg{width:20px;height:20px}
+#hand{padding-left:64px}
+#hand .card{width:96px;height:134px;flex:0 1 96px}
+@keyframes land{0%{transform:translateY(-34px) scale(1.28) rotate(-2.5deg);box-shadow:0 26px 30px #000a;opacity:.85}58%{transform:translateY(0) scale(.96);box-shadow:0 2px 4px #000c;opacity:1}74%{transform:scale(1.03)}100%{transform:scale(1)}}
+.card.landing{animation:land .42s cubic-bezier(.3,.1,.4,1)}
+.dust{position:absolute;border-radius:50%;pointer-events:none;z-index:3;background:radial-gradient(circle,#e8dcc0cc,#b8a88a00 70%)}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
@@ -160,11 +171,6 @@ body.noanim *{animation:none!important}
   <div id="bar">
     <button id="bImport" aria-label="Import deck" title="Import deck"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 17v3h16v-3"/></svg></button>
     <button class="z" data-zone="lib" id="zLib" aria-label="Library" title="Library"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-13c-3-.5-6 0-8 1.5z"/><path d="M12 6v13"/></svg><b>0</b></button>
-    <button id="bDraw" aria-label="Draw a card" title="Draw a card"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="1.5" width="8" height="11" rx="1.3" transform="rotate(-12 6 7)"/><g transform="translate(4.5 5.5) scale(.72)" stroke-width="2.6"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></g></svg></button>
-    <button id="bMull" aria-label="Mulligan" title="Mulligan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="9" rx="1.2" transform="rotate(-15 5.5 7.5)"/><rect x="8.5" y="2" width="7" height="9" rx="1.2"/><rect x="15" y="3" width="7" height="9" rx="1.2" transform="rotate(15 18.5 7.5)"/><path d="M15.6 19a3.6 3.6 0 1 1-1.05-2.55L15.6 17.6"/><path d="M15.6 14.8v2.8h-2.8"/></svg></button>
-    <button id="bScry" aria-label="Scry" title="Scry"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
-    <button id="bShuf" aria-label="Shuffle library" title="Shuffle library"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg></button>
-    <button id="bUntap" aria-label="Untap all" title="Untap all"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
     <button class="z" data-zone="gy" id="zGy" aria-label="Graveyard" title="Graveyard"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V9a6 6 0 0 1 12 0v12z"/><path d="M12 8v6M9.5 10.5h5"/><path d="M3 21h18"/></svg><b>0</b></button>
     <button class="z" data-zone="ex" id="zEx" aria-label="Exile" title="Exile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="5.5" ry="9.5"/><ellipse cx="12" cy="12" rx="2" ry="5"/><path d="M3 12h2M19 12h2"/></svg><b>0</b></button>
     <button class="z" data-zone="cmd" id="zCmd" aria-label="Command zone" title="Command zone"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18"/><path d="M6 3v17l6-4 6 4V3"/></svg><b>0</b></button>
@@ -179,6 +185,12 @@ body.noanim *{animation:none!important}
   <div id="hand" data-zone="hand"></div>
 </div>
 
+<div id="handbar">
+  <button id="bScry" aria-label="Scry" title="Scry"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
+  <button id="bUntap" aria-label="Untap all" title="Untap all"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+  <button id="bMull" aria-label="Mulligan" title="Mulligan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="9" rx="1.2" transform="rotate(-15 5.5 7.5)"/><rect x="8.5" y="2" width="7" height="9" rx="1.2"/><rect x="15" y="3" width="7" height="9" rx="1.2" transform="rotate(15 18.5 7.5)"/><path d="M15.6 19a3.6 3.6 0 1 1-1.05-2.55L15.6 17.6"/><path d="M15.6 14.8v2.8h-2.8"/></svg></button>
+  <button id="bDraw" aria-label="Draw a card" title="Draw a card"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="1.5" width="8" height="11" rx="1.3" transform="rotate(-12 6 7)"/><g transform="translate(4.5 5.5) scale(.72)" stroke-width="2.6"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></g></svg></button>
+</div>
 <div id="peek"></div>
 <div id="toast"></div>
 <div class="ov" id="zoom"><img id="zimg" alt=""></div>
@@ -218,6 +230,8 @@ body.noanim *{animation:none!important}
   <div class="row"><button id="cdx">Close</button></div>
 </div></div>
 
+<div class="ov" id="rv"><div class="panel" style="width:min(900px,100%)"><h2 id="rvt"></h2><div class="grid" id="rvg"></div><div class="row"><button id="rvx">Close</button></div></div></div>
+
 <div class="ov" id="mu"><div class="panel" style="width:min(420px,100%)"><h2 id="mut"></h2><div id="mub" style="font-size:14px;color:#cdbb97"></div><div class="row" id="mur" style="flex-wrap:wrap"></div><div class="row"><button id="muc">Cancel</button></div></div></div>
 
 <div class="ov" id="sc"><div class="panel" style="width:min(940px,100%)"><h2 id="sct"></h2><div style="font-size:13px;color:#cdbb97">Top of your library is on the left. Move cards with the arrows, or send them to the bottom.</div><div id="scg" style="display:flex;gap:10px;overflow:auto;padding:6px 2px"></div><div class="row"><button id="scd">Done</button><button id="scx">Cancel</button></div></div></div>
@@ -250,14 +264,14 @@ body.noanim *{animation:none!important}
 </div></div>
 
 <div class="ov" id="zl"><div class="panel">
-  <h2 id="zt"></h2>
+  <div class="row"><h2 id="zt" style="flex:1"></h2><button id="zsh2">Shuffle</button></div>
   <input type="search" id="zs" placeholder="Search by name" autocomplete="off" autocapitalize="off">
   <div class="grid" id="zg"></div>
   <div class="row"><span id="zn" style="flex:1;font-size:13px;color:#cdbb97"></span><button id="zsh">Shuffle &amp; close</button><button id="zc">Close</button></div>
 </div></div>
 
 <script>
-const $=s=>document.querySelector(s), CW=96, CH=134;
+const $=s=>document.querySelector(s), CW=80, CH=112;
 let lastMissing=[];
 let S={lib:[],hand:[],bf:[],gy:[],ex:[],cmd:[],land:[],mull:0,cd:{},arrows:[],life:20,deck:[]}, uid=0;
 const ZN={lib:'Library',hand:'Hand',bf:'Battlefield',gy:'Graveyard',ex:'Exile',cmd:'Command',land:'Lands'};
@@ -334,6 +348,7 @@ function find(id){for(const z of ['hand','bf','land','gy','ex','cmd','lib']){con
 function resetFace(c){if(c.faces&&c.face){c.face=0;const f=c.faces[0];c.img=f.img;c.pt=f.pt;c.name=f.name;c.land=f.land}}
 function flip(c){
   if(!c.faces)return;
+  if(c.under&&c.under.length)c=peelOff(c);
   c.face=c.face?0:1;const f=c.faces[c.face];c.img=f.img;c.pt=f.pt;c.name=f.name;c.land=f.land;
   const z=find(c.id);
   if(z&&c.land&&z[0]==='bf')move(c.id,'land');
@@ -341,14 +356,38 @@ function flip(c){
   else render();
   if($('#peek').classList.contains('on'))showPeek(c.id);
 }
+function sameCard(a,b){
+  if(a.id===b.id||a.name!==b.name||!!a.token!==!!b.token||!!a.t!==!!b.t||(a.face||0)!==(b.face||0))return false;
+  const ka=Object.keys(a.cn||{}),kb=Object.keys(b.cn||{});
+  return ka.length===kb.length&&ka.every(k=>(a.cn||{})[k]===(b.cn||{})[k]);
+}
+function setTapped(c,v){c.t=v;(c.under||[]).forEach(u=>u.t=v)}
+function peelOff(c){
+  const x=c.under.pop(),f=find(c.id),z=f?f[0]:'bf';
+  x.x=clX(c.x+26);x.y=clY(c.y+26);S[z].push(x);return x;
+}
+function splitFor(d){
+  const f=find(d.id);if(!f)return d.id;
+  const c=S[f[0]][f[1]];
+  if(d.whole||!c.under||!c.under.length)return c.id;
+  const x=c.under.pop();x.x=c.x;x.y=c.y;x.t=c.t;S[f[0]].push(x);return x.id;
+}
+function unstack(c){
+  const f=find(c.id),z=f?f[0]:'bf',u=c.under||[];c.under=[];
+  u.forEach((x,i)=>{x.x=clX(c.x+30*(i+1));x.y=clY(c.y);x.t=c.t;S[z].push(x)});
+  render();
+}
 function move(id,to,x,y){
   const f=find(id);if(!f)return;
   const [c]=S[f[0]].splice(f[1],1);
-  c.t=false;
-  if(to!=='bf'&&to!=='land'){c.cn={};resetFace(c)}
-  if(c.token&&to!=='bf'&&to!=='land'){render();return}
+  const extra=c.under||[],field=to==='bf'||to==='land';
+  c.t=false;extra.forEach(u=>u.t=false);
+  if(!field){c.under=[];[c,...extra].forEach(u=>{u.cn={};resetFace(u)})}
+  if(c.token&&!field){render();return}
   if(to==='bf'){c.x=x;c.y=y}
-  S[to].push(c);render();
+  S[to].push(c);
+  if(!field)extra.forEach(u=>S[to].push(u));
+  render();
 }
 
 /* ---- render ---- */
@@ -357,6 +396,8 @@ function cardEl(c,cls){
   d.className='card '+(cls||'')+(c.t?' t':'')+(c.token?' tok':'');d.dataset.id=c.id;
   if(c.img){const i=document.createElement('img');i.src=c.img;i.alt=c.name;i.draggable=false;d.append(i)}
   else{d.innerHTML='<div class="nm"></div>';d.firstChild.textContent=c.name}
+  const n=1+(c.under?c.under.length:0);
+  if(n>1){d.classList.add('pile');const b=document.createElement('span');b.className='cnt';b.textContent='×'+n;d.append(b)}
   return d;
 }
 function render(){
@@ -382,7 +423,7 @@ function render(){
       const x=pad+i*step,e=cardEl(c,'sm');e.style.left=x+'px';e.style.top='36px';LC.append(e);
       const mb=document.createElement('button');mb.className='more';mb.dataset.for=c.id;mb.textContent='…';mb.title='Card menu';mb.style.left=(x+LW)+'px';mb.style.top='2px';mb.onclick=()=>{showMore(c.id);cardMenu(c,mb)};LC.append(mb);
     });
-    const tp=S.land.filter(c=>c.t),cnt={};let any=0;
+    const tp=[];S.land.forEach(c=>{if(c.t)for(let k=0;k<1+(c.under?c.under.length:0);k++)tp.push(c)});const cnt={};let any=0;
     tp.forEach(c=>{const m=c.mana||[];if(m.length===1)cnt[m[0]]=(cnt[m[0]]||0)+1;else any++});
     if(lastMana!==null&&lastMana!==tp.length)pulse($('#mana b'));lastMana=tp.length;$('#mana b').textContent=tp.length;
     const pp=$('#pips');pp.innerHTML='';
@@ -402,14 +443,17 @@ document.addEventListener('pointerdown',e=>{
   const el=e.target.closest('.card[data-id]');if(!el)return;
   const id=+el.dataset.id,f=find(id);
   drag={el,id,zone:f&&f[0],sx:e.clientX,sy:e.clientY,moved:false,long:false};
-  timer=setTimeout(()=>{if(drag&&!drag.moved){drag.long=true;zoom(id)}},450);
+  timer=setTimeout(()=>{if(drag&&!drag.moved){drag.long=true;const q=find(id),pc=q&&S[q[0]][q[1]];if(pc&&pc.under&&pc.under.length){drag.whole=true;el.classList.add('armed')}else zoom(id)}},450);
   el.setPointerCapture(e.pointerId);
 });
 document.addEventListener('pointermove',e=>{
   if(!drag)return;
   if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>8){
     drag.moved=true;clearTimeout(timer);
-    const gh=drag.el.cloneNode(true);gh.classList.remove('t');gh.classList.add('drag');gh.removeAttribute('data-id');gh.style.cssText='width:'+CW+'px;height:'+CH+'px';document.body.append(gh);drag.ghost=gh;drag.el.style.opacity='.25';
+    const gh=drag.el.cloneNode(true);gh.classList.remove('t');gh.classList.add('drag');gh.removeAttribute('data-id');gh.style.cssText='width:'+CW+'px;height:'+CH+'px';
+    const q0=find(drag.id),pc0=q0&&S[q0[0]][q0[1]],isPile=!!(pc0&&pc0.under&&pc0.under.length);
+    if(isPile&&!drag.whole){gh.classList.remove('pile');gh.querySelectorAll('.cnt').forEach(x=>x.remove())}
+    gh.classList.remove('armed');document.body.append(gh);drag.ghost=gh;if(!isPile||drag.whole)drag.el.style.opacity='.25';
     showPeek(drag.id,true);document.body.classList.add('dragging');document.querySelectorAll('[data-for="'+drag.id+'"]').forEach(e=>e.style.display='none');
   }
   if(drag.moved){
@@ -426,7 +470,7 @@ document.addEventListener('pointerup',e=>{
   if(!drag)return;clearTimeout(timer);
   const d=drag;drag=null;document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));$('#lands').classList.remove('hl');endDragFx();
   if(d.moved){
-    d.fr=d.ghost.getBoundingClientRect();d.ghost.remove();
+    d.fr=d.ghost.getBoundingClientRect();d.ghost.remove();const fr0=d.fr;
     clearTimeout(pk);pk=setTimeout(hidePeek,3000);
     const ofe=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x.classList&&x.classList.contains('ofield'));
     if(ofe){giveCard(d.id,ofe.dataset.pid,e.clientX,e.clientY);return}
@@ -435,10 +479,16 @@ document.addEventListener('pointerup',e=>{
     if(z==='bf'){const mr=$('#mine').getBoundingClientRect();if(e.clientX<mr.left||e.clientX>mr.right||e.clientY<mr.top||e.clientY>mr.bottom){render();return}}
     const fc=find(d.id),cd=fc&&S[fc[0]][fc[1]];
     if(cd){if(z==='bf'&&cd.land)z='land';else if(z==='land'&&!cd.land)z='bf'}
+    if(cd&&(z==='bf'||z==='land')){
+      const st=stackTarget(d,cd,e);
+      if(st==='self'){render();return}
+      if(st){stackOnto(d,cd,st,fr0);return}
+    }
+    d.id=splitFor(d);
     if(z==='bf'){
       const r=$('#mine').getBoundingClientRect();
       move(d.id,'bf',clX((e.clientX-r.left)/zm-CW/2),clY((e.clientY-r.top)/zm-CH/2));
-      showMore(d.id);
+      showMore(d.id);landFx(d.id);
     }else{
       const fr=d.fr,fc=find(d.id),cc=fc&&S[fc[0]][fc[1]];
       move(d.id,z);
@@ -451,8 +501,8 @@ document.addEventListener('pointerup',e=>{
     const now=Date.now();
     const onField=d.zone==='bf'||d.zone==='land';
     if(onField)showMore(d.id);
-    if(onField&&lastTap.id===d.id&&now-lastTap.t<350){const c=S[d.zone].find(c=>c.id===d.id);if(c){c.t=!c.t;render()}lastTap={id:0,t:0}}
-    else{lastTap={id:d.id,t:now};showPeek(d.id)}
+    if(onField&&lastTap.id===d.id&&now-lastTap.t<350){const c=S[d.zone].find(c=>c.id===d.id);if(c){setTapped(c,!c.t);render()}lastTap={id:0,t:0}}
+    else{lastTap={id:d.id,t:now};showPeek(d.id);if(d.zone==='hand')showHandMore(d.id)}
   }
 });
 document.addEventListener('pointercancel',()=>{if(drag&&drag.ghost)drag.ghost.remove();drag=null;endDragFx();clearTimeout(timer);render()});
@@ -479,8 +529,7 @@ $('#go').onclick=async()=>{
 $('#restart').onclick=()=>{if(S.deck.length){newGame();$('#imp').classList.remove('on')}else $('#msg').textContent='Load a deck first.'};
 $('#bDraw').onclick=drawOne;
 $('#zLib').onclick=()=>openZone('lib');
-$('#bShuf').onclick=()=>{shuffle(S.lib);render()};
-$('#bUntap').onclick=()=>{S.bf.forEach(c=>c.t=false);S.land.forEach(c=>c.t=false);render()};
+$('#bUntap').onclick=()=>{S.bf.forEach(c=>setTapped(c,false));S.land.forEach(c=>setTapped(c,false));render()};
 $('#lm').onclick=()=>{S.life--;render()};
 $('#lp').onclick=()=>{S.life++;render()};
 let curZone=null;
@@ -492,7 +541,7 @@ function fillZone(){
   const shown=list.filter(c=>c.name.toLowerCase().includes(q));
   $('#zt').textContent=ZN[z]+' ('+(q?shown.length+' of ':'')+S[z].length+')';
   $('#zn').textContent=z==='lib'?'Sorted A to Z so the order stays secret. Tap a card to add it to your hand.':(z==='cmd'?'Tap a commander to put it on the table.':'Tap a card to return it to your hand.');
-  $('#zsh').style.display=z==='lib'?'':'none';
+  $('#zsh').style.display=z==='lib'?'':'none';$('#zsh2').style.display=z==='lib'?'':'none';
   const g=$('#zg');g.innerHTML='';
   if(!shown.length){g.textContent='No cards found.'}
   shown.forEach(c=>{
@@ -503,7 +552,9 @@ function fillZone(){
   });
 }
 $('#zs').addEventListener('input',fillZone);
-$('#zsh').onclick=()=>{shuffle(S.lib);$('#zl').classList.remove('on');render()};
+const shufClose=()=>{shuffle(S.lib);$('#zl').classList.remove('on');render();toast('Library shuffled')};
+$('#zsh').onclick=shufClose;
+$('#zsh2').onclick=()=>{shuffle(S.lib);render();fillZone();toast('Library shuffled')};
 let pk=null;
 function showPeek(id,hold){
   const f=find(id);if(!f)return;const c=S[f[0]][f[1]],p=$('#peek');
@@ -521,7 +572,7 @@ function curPT(c){
 }
 const CT=['+1/+1','-1/-1','Loyalty','Charge','Time','Shield'];
 let cnCard=null;
-function bump(c,n,d){c.cn=c.cn||{};c.cn[n]=Math.max(0,(c.cn[n]||0)+d);if(!c.cn[n])delete c.cn[n];render();fillCn()}
+function bump(c,n,d){if(c.under&&c.under.length){c=peelOff(c);cnCard=c}c.cn=c.cn||{};c.cn[n]=Math.max(0,(c.cn[n]||0)+d);if(!c.cn[n])delete c.cn[n];render();fillCn()}
 function mkb(t,f){const b=document.createElement('button');b.textContent=t;b.onclick=f;return b}
 function openCn(c){cnCard=c;$('#cnt').textContent=c.name;$('#cni').value='';fillCn();$('#cn').classList.add('on')}
 function fillCn(){
@@ -530,7 +581,7 @@ function fillCn(){
     const row=document.createElement('div');row.className='crow';
     const l=document.createElement('span');l.textContent=n;
     const v=document.createElement('b');v.textContent=(c.cn&&c.cn[n])||0;
-    row.append(l,mkb('−',()=>bump(c,n,-1)),v,mkb('+',()=>bump(c,n,1)));
+    row.append(l,mkb('−',()=>bump(cnCard,n,-1)),v,mkb('+',()=>bump(cnCard,n,1)));
     box.append(row);
   });
 }
@@ -552,6 +603,8 @@ function cardMenu(c,btn){
     tm.innerHTML='';c.tokens.forEach(t=>tm.append(mkb(t.name,()=>{tm.style.display='none';summon(c,t)})));place(btn);
   });
   add('Add Counter',()=>openCn(c));
+  add('Reveal to…',()=>revealMenu(c));
+  if(c.under&&c.under.length)add('Unstack',()=>unstack(c));
   const fz=find(c.id);
   if(fz&&fz[0]==='bf')add('Target',()=>startTarget(c));
   if(S.arrows.some(a=>a.s===gid(c)))add('Clear targets',()=>{S.arrows=S.arrows.filter(a=>a.s!==gid(c));render()});
@@ -561,9 +614,9 @@ function cardMenu(c,btn){
 }
 function dup(c){
   const f=find(c.id),r=$('#mine').getBoundingClientRect();
-  if(f&&f[0]==='land'){S.land.push({...c,id:++uid,gid:null,cn:{...(c.cn||{})},token:true,t:false});render();return}
-  S.bf.push({...c,id:++uid,gid:null,cn:{...(c.cn||{})},token:true,x:clX(c.x+24),y:clY(c.y+24)});
-  render();
+  if(f&&f[0]==='land'){S.land.push({...c,id:++uid,gid:null,under:[],cn:{...(c.cn||{})},token:true,t:false});render();return}
+  S.bf.push({...c,id:++uid,gid:null,under:[],cn:{...(c.cn||{})},token:true,x:clX(c.x+24),y:clY(c.y+24)});
+  render();landFx(uid);
 }
 async function summon(c,t){
   let d={name:t.name,img:'',pt:''};
@@ -571,7 +624,7 @@ async function summon(c,t){
   const r=$('#mine').getBoundingClientRect();
   let x=c.x+CW+8;if(x>FW-CW)x=c.x-CW-8;
   S.bf.push({id:++uid,name:d.name,img:d.img,pt:d.pt,tokens:[],cn:{},token:true,x:Math.max(0,x),y:Math.max(34,Math.min(FH-CH,c.y)),t:false});
-  render();
+  render();landFx(uid);
 }
 async function moxText(url){
   const m=url.match(/moxfield\.com\/decks\/([A-Za-z0-9_-]+)/);if(!m)return null;
@@ -591,7 +644,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, layout fixes v16';
+const BUILD='Build: Oct 23, landing effect and smaller cards v21';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -599,7 +652,7 @@ let pz=null;const ptr=new Map();
 let T={p:null,n:0,ts:0},TG=null,viewing=null,zm=1,pan={x:0,y:0},FW=0,FH=0,pd=null,justPanned=0;const G=40;
 let NET={peer:null,id:'',conns:[],host:false,code:'',name:'',players:{}},st=null,oppId=null,ozone=null;
 const status=t=>{$('#nstat').textContent=t};
-const cs=c=>({n:c.name,i:c.img,p:curPT(c),t:c.t?1:0,cn:c.cn||{},k:c.token?1:0,x:c.x,y:c.y,g:gid(c)});
+const cs=c=>({n:c.name,i:c.img,p:curPT(c),t:c.t?1:0,cn:c.cn||{},k:c.token?1:0,x:c.x,y:c.y,g:gid(c),n:1+(c.under?c.under.length:0)});
 const zs=a=>a.map(c=>({n:c.name,i:c.img}));
 function mySnap(){const r=$('#mine').getBoundingClientRect();return{name:NET.name,life:S.life,cd:S.cd,ar:S.arrows,w:FW,h:FH,hand:S.hand.length,lib:S.lib.length,bf:S.bf.map(cs),land:S.land.map(cs),gy:zs(S.gy),ex:zs(S.ex),cmd:zs(S.cmd)}}
 function sync(){if(!NET.id)return;const m={t:'snap',id:NET.id,snap:mySnap()};NET.conns.forEach(c=>c.open&&c.send(m))}
@@ -616,6 +669,11 @@ function onMsg(m,c){
   else if(m.t==='chat'){if(NET.host)NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m));pushChat({name:m.name,text:m.text})}
   else if(m.t==='turn'){if(NET.host)NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m));applyTurn(m.turn)}
   else if(m.t==='give'){if(m.to===NET.id)receiveCard(m);else if(NET.host)sendTo(m)}
+  else if(m.t==='reveal'){
+    if(m.to==='all'){if(NET.host)NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m));showReveal(m)}
+    else if(m.to===NET.id)showReveal(m);
+    else if(NET.host)sendTo(m);
+  }
   else if(m.t==='unarrow'){if(NET.host)NET.conns.filter(x=>x!==c&&x.open).forEach(x=>x.send(m));dropArrow(m.a);render()}
 }
 function drop(c){
@@ -739,6 +797,7 @@ function mini(c,cls){
   const d=document.createElement('div');d.className='card '+(cls||'')+(c.t?' t':'')+(c.k?' tok':'');
   if(c.i){const i=document.createElement('img');i.src=c.i;i.alt=c.n;i.draggable=false;d.append(i)}
   else{d.innerHTML='<div class="nm"></div>';d.firstChild.textContent=c.n}
+  if(c.n>1){d.classList.add('pile');const b=document.createElement('span');b.className='cnt';b.textContent='×'+c.n;d.append(b)}
   d.onclick=()=>{if(Date.now()-justPanned<=150)return;if(TG){if(!cls&&c.g)addArrow({k:'c',g:c.g});else endTarget();return}peekRaw(c.i,c.n)};return d;
 }
 function peekRaw(img,name){
@@ -904,6 +963,102 @@ function renderArrows(){
   });
 }
 
+/* ---- landing effect ---- */
+function landFx(id){
+  if(!animOn())return;
+  const el=document.querySelector('#mine .card[data-id="'+id+'"]'),f=find(id),c=f&&S[f[0]][f[1]];
+  if(!el||!c||f[0]!=='bf')return;
+  el.classList.remove('landing');void el.offsetWidth;el.classList.add('landing');
+  setTimeout(()=>el.classList.remove('landing'),520);
+  setTimeout(()=>dust(c.x,c.y+CH-3),190);
+}
+function dust(x,y){
+  const box=$('#mine');
+  for(let i=0;i<12;i++){
+    const d=document.createElement('span'),puff=i<8,sz=puff?12+Math.random()*12:3+Math.random()*3,side=Math.random()<.5?-1:1,bx=x+CW*(.1+Math.random()*.8);
+    d.className='dust';d.style.cssText='left:'+(bx-sz/2)+'px;top:'+(y-sz/2)+'px;width:'+sz+'px;height:'+sz+'px';
+    box.append(d);
+    const dx=puff?side*(14+Math.random()*34):side*(4+Math.random()*14),dy=puff?-(2+Math.random()*10):-(14+Math.random()*22);
+    d.animate([{transform:'translate(0,0) scale(.5)',opacity:.8},{transform:'translate('+dx+'px,'+dy+'px) scale('+(puff?2.4:1)+')',opacity:0}],{duration:puff?520+Math.random()*220:380+Math.random()*180,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'}).onfinish=()=>d.remove();
+  }
+}
+
+/* ---- stacking identical cards ---- */
+function stackTarget(d,c,e){
+  for(const el of document.elementsFromPoint(e.clientX,e.clientY)){
+    const k=el.closest&&el.closest('.card[data-id]');if(!k)continue;
+    const id=+k.dataset.id;
+    if(id===d.id){if(c.under&&c.under.length&&!d.whole)return 'self';continue}
+    const g=find(id);if(!g||(g[0]!=='bf'&&g[0]!=='land'))return null;
+    const c2=S[g[0]][g[1]];
+    if(sameCard(c,c2))return c2;
+    if(c.name===c2.name)toast('Can\'t stack: counters or tapped state differ');
+    return null;
+  }
+  return null;
+}
+function stackOnto(d,c,c2,fr){
+  const f=find(d.id),moved=[];
+  if(d.whole||!c.under||!c.under.length){
+    S[f[0]].splice(f[1],1);moved.push(c,...(c.under||[]));c.under=[];
+  }else moved.push(c.under.pop());
+  c2.under=(c2.under||[]).concat(moved);
+  const el2=document.querySelector('.card[data-id="'+c2.id+'"]');
+  if(el2&&fr)flyClone(c.img,c.name,fr,rectOf(el2),{dur:260});
+  render();
+  pulse(document.querySelector('.card[data-id="'+c2.id+'"] .cnt'),'pulse');
+}
+
+/* ---- reveal ---- */
+function revealMenu(c){
+  const hand=Array.isArray(c),ids=Object.keys(NET.players);
+  if(!ids.length){toast('Nobody else is in the room.');return}
+  menu(hand?'Reveal your hand':'Reveal '+c.name,'Who should see it?',[['Everyone',()=>doReveal(c,'all')],...ids.map(id=>[NET.players[id].name,()=>doReveal(c,id)])]);
+}
+function doReveal(c,to){
+  const hand=Array.isArray(c),from=NET.name||'Someone';
+  const m=hand?{t:'reveal',to,from,cards:c.map(x=>({name:x.name,img:x.img}))}:{t:'reveal',to,from,name:c.name,img:c.img};
+  if(to==='all')NET.conns.forEach(x=>x.open&&x.send(m));
+  else if(!sendTo(m)){sysMsg('Could not reach that player.');return}
+  toast('Revealed '+(hand?'your hand':c.name)+' to '+(to==='all'?'everyone':nameOf(to)));
+}
+function showReveal(m){
+  if(m.cards){
+    $('#rvt').textContent=m.from+' reveals their hand'+(m.to==='all'?'':' to you');
+    const g=$('#rvg');g.innerHTML='';
+    m.cards.forEach(c=>{
+      const d=document.createElement('div');
+      if(c.img){d.style.padding=0;const im=document.createElement('img');im.src=c.img;im.alt=c.name;d.append(im)}else d.textContent=c.name;
+      d.onclick=()=>peekRaw(c.img,c.name);g.append(d);
+    });
+    $('#rv').classList.add('on');
+    sysMsg(m.from+' revealed their hand: '+(m.cards.map(c=>c.name).join(', ')||'empty'));toast(m.from+' reveals their hand');
+    return;
+  }
+  peekRaw(m.img,m.name);clearTimeout(pk);pk=setTimeout(hidePeek,6000);
+  const t=m.from+' reveals '+m.name+(m.to==='all'?' to everyone':' to you');toast(t);sysMsg(t);
+}
+$('#rvx').onclick=()=>$('#rv').classList.remove('on');
+
+/* ---- menu for cards in your hand ---- */
+function handMenu(c,btn){
+  tm.innerHTML='';
+  const add=(t,f)=>tm.append(mkb(t,()=>{tm.style.display='none';f()}));
+  add('Reveal to…',()=>revealMenu(c));
+  add('Reveal whole hand…',()=>revealMenu(S.hand.slice()));
+  place(btn);
+}
+function showHandMore(id){
+  const el=document.querySelector('#hand .card[data-id="'+id+'"]'),c=S.hand.find(x=>x.id===id);
+  if(!el||!c)return;
+  let b=$('#hmore');
+  if(!b){b=document.createElement('button');b.id='hmore';b.className='more';b.textContent='…';b.title='Card menu';document.body.append(b)}
+  const r=rectOf(el);
+  b.style.cssText='position:fixed;z-index:60;transform:none;left:'+Math.max(4,r.right-44)+'px;top:'+(r.top-36)+'px';
+  b.onclick=()=>handMenu(c,b);
+  b.classList.add('on');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('on'),2000);
+}
+
 /* ---- turn order ---- */
 const turnIds=()=>NET.id?[NET.id,...Object.keys(NET.players)].sort():['solo'];
 const nameOf=id=>id==='solo'?'You':id===NET.id?(NET.name||'You'):(NET.players[id]?NET.players[id].name:'Player');
@@ -945,7 +1100,8 @@ function giveCard(id,pid,cx,cy){
   menu('Give card','Give '+c.name+' to '+p.name+'? It leaves your game and appears on their table.',[['Yes, give it',()=>doGive(id,pid,x,y)]]);
 }
 function doGive(id,pid,x,y){
-  const f=find(id);if(!f)return;const c=S[f[0]][f[1]];
+  let f=find(id);if(!f)return;
+  const pc=S[f[0]][f[1]];if(pc.under&&pc.under.length){id=splitFor({id,whole:false});f=find(id)}const c=S[f[0]][f[1]];
   const card={name:c.name,img:c.img,pt:c.pt,tokens:c.tokens||[],cn:c.cn||{},token:!!c.token,land:!!c.land,mana:c.mana||[],faces:c.faces||null,face:c.face||0,t:c.t?1:0};
   if(!sendTo({t:'give',to:pid,from:NET.name,card,x,y})){sysMsg('Could not reach '+nameOf(pid)+'. The card stayed with you.');return}
   const el0=document.querySelector('.card[data-id="'+id+'"]'),fr0=el0&&rectOf(el0),of0=document.querySelector('.ofield[data-pid="'+pid+'"]');
@@ -957,7 +1113,7 @@ function receiveCard(m){
   if(c.land)S.land.push(c);
   else{c.x=clX(m.x);c.y=clY(m.y);S.bf.push(c)}
   sysMsg((m.from||'Someone')+' gave you '+c.name);render();
-  pulse(document.querySelector((c.land?'#lcards':'#mine')+' .card[data-id="'+c.id+'"]'),'pop');toast((m.from||'Someone')+' gave you '+c.name);
+  if(c.land)pulse(document.querySelector('#lcards .card[data-id="'+c.id+'"]'),'pop');else landFx(c.id);toast((m.from||'Someone')+' gave you '+c.name);
 }
 
 /* ---- saved decks (this device only) ---- */
