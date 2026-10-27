@@ -111,12 +111,12 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 .sct.bot .pic{opacity:.4}
 .sct .row{gap:4px}
 .sct button{min-width:0;padding:6px 8px;min-height:40px;flex:1}
-#turnb{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:3;padding:4px 14px;border-radius:15px;background:#000b;border:1px solid #7d5733;font-size:14px;white-space:nowrap;display:none;pointer-events:none}
+#turnb{position:absolute;top:6px;left:8px;z-index:3;padding:4px 14px;border-radius:15px;background:#000b;border:1px solid #7d5733;font-size:14px;white-space:nowrap;display:none;pointer-events:none}
 #turnb.me{border-color:var(--gold);color:var(--gold)}
 #mine.turn{outline:3px solid var(--gold)}
 .chip.turn{border-color:var(--gold);box-shadow:0 0 0 2px #e3b95a66}
 #arrows{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none;z-index:5}
-#tgb{position:absolute;top:40px;left:50%;transform:translateX(-50%);z-index:4;max-width:80%;padding:6px 14px;border-radius:15px;background:#000d;border:1px solid var(--gold);color:var(--gold);font-size:14px;display:none;pointer-events:none;text-align:center}
+#tgb{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);z-index:4;max-width:80%;padding:6px 14px;border-radius:15px;background:#000d;border:1px solid var(--gold);color:var(--gold);font-size:14px;display:none;pointer-events:none;text-align:center}
 #bCd{margin-left:auto}
 .life{margin-left:0}
 @media (hover:hover){#bf{cursor:grab}.card[data-id]{cursor:grab}.card.drag{cursor:grabbing}button{cursor:pointer}}
@@ -130,7 +130,7 @@ button:active{background:linear-gradient(#4e321c,#6a4529)}
 .shake{animation:shake .4s}
 @keyframes bump{0%{transform:scale(1)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
 .bump{animation:bump .35s}
-@keyframes slideb{0%{opacity:0;top:-24px}100%{opacity:1;top:6px}}
+@keyframes slideb{0%{opacity:0;transform:translateY(-14px)}100%{opacity:1;transform:none}}
 #turnb.slide{animation:slideb .5s ease}
 @keyframes fieldflash{0%{box-shadow:inset 0 0 0 0 #e3b95a00}30%{box-shadow:inset 0 0 90px 12px #e3b95aaa}100%{box-shadow:inset 0 0 0 0 #e3b95a00}}
 #mine.flash{animation:fieldflash 1s ease-out}
@@ -377,7 +377,7 @@ function render(){
   syncMore();
   const LC=$('#lcards');LC.innerHTML='';
   {
-    const n=S.land.length,LW=72,pad=12,step=n>1?Math.min(LW+8,Math.max(14,(LC.clientWidth-2*pad-LW-30)/(n-1))):0;
+    const n=S.land.length,LW=72,pad=12,step=n>1?Math.min(LW+30,Math.max(14,(LC.clientWidth-2*pad-LW-30)/(n-1))):0;
     S.land.forEach((c,i)=>{
       const x=pad+i*step,e=cardEl(c,'sm');e.style.left=x+'px';e.style.top='36px';LC.append(e);
       const mb=document.createElement('button');mb.className='more';mb.dataset.for=c.id;mb.textContent='…';mb.title='Card menu';mb.style.left=(x+LW)+'px';mb.style.top='2px';mb.onclick=()=>{showMore(c.id);cardMenu(c,mb)};LC.append(mb);
@@ -591,7 +591,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, saved decks v15';
+const BUILD='Build: Oct 23, layout fixes v16';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -651,7 +651,7 @@ function joinRoom(){
     const c=pr.connect('mtgtab-'+code,{reliable:true});NET.conns=[c];
     c.on('iceStateChanged',st=>{if(st==='checking')status('Connecting to room '+code+'…');if(st==='failed')status('Direct connection failed. Your Wi-Fi may block devices from reaching each other. Add a relay server in this panel, on both devices.')});
     const to=setTimeout(()=>{if(!c.open)status('Could not connect yet. Check for a VPN, that both devices are online, and the room code. If it still fails, add a relay server in this panel.')},15000);
-    c.on('open',()=>{clearTimeout(to);$('#netc').textContent=code;status('Connected to room '+code+'.');sync()});
+    c.on('open',()=>{clearTimeout(to);setTimeout(()=>$('#net').classList.remove('on'),900);$('#netc').textContent=code;status('Connected to room '+code+'.');sync()});
     c.on('data',m=>onMsg(m,c));
     c.on('close',()=>{NET.players={};gotPlayers();status('The host left the room.');$('#netc').textContent=''});
   });
@@ -691,8 +691,11 @@ function clampPan(x,y,z){
 function goTo(id){
   if(id===NET.id){viewing=id;setPan(0,0,true,1);return}
   const t=seats().find(t=>t.id===id);if(!t)return;
-  viewing=id;setPan(FW/2-t.cx,FH/2-t.cy,true,1);
+  viewing=id;
+  const q=Math.abs(t.rot)===90,z=Math.max(minZoom(),Math.min(1,(FW-40)/(q?FH:FW),(FH-40)/(q?FW:FH)));
+  setPan(FW/2-z*t.cx,FH/2-z*t.cy,true,z);
 }
+function placeBanner(){const h=$('#pchips').offsetHeight;$('#turnb').style.top=(h?h+12:6)+'px'}
 function renderPlayers(){
   const b=$('#pchips');b.innerHTML='';
   const ids=Object.keys(NET.players);if(!ids.length)return;
@@ -705,6 +708,7 @@ function renderPlayers(){
     if(p.dl){const dl=document.createElement('span');dl.className='delta '+(p.dl>0?'up':'down');dl.textContent=(p.dl>0?'+':'')+p.dl;bt.append(dl);p.dl=0}
     b.append(bt)});
   b.querySelectorAll('button').forEach(x=>x.classList.add('chip'));
+  placeBanner();
 }
 function renderOpps(){
   const w=$('#world');w.querySelectorAll('.ofield').forEach(e=>e.remove());
@@ -907,7 +911,7 @@ function renderTurn(){
   const b=$('#turnb'),mine=T.p===(NET.id||'solo');
   if(!T.p)b.style.display='none';
   else{b.style.display='block';b.className=mine?'me':'';b.id='turnb';b.textContent='Turn '+T.n+' · '+(mine?'your turn':nameOf(T.p)+"'s turn")}
-  $('#mine').classList.toggle('turn',!!T.p&&mine);
+  $('#mine').classList.toggle('turn',!!T.p&&mine);placeBanner();
   const tk=T.p+'|'+T.n;if(lastTurn!==null&&lastTurn!==tk&&T.p){pulse(b,'slide');if(mine){pulse($('#mine'),'flash');toast('Your turn')}}lastTurn=tk;
   renderPlayers();renderOpps();
 }
