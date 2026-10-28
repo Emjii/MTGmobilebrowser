@@ -651,7 +651,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, impact and magic effects v22';
+const BUILD='Build: Oct 23, rocky impact v24';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -981,7 +981,7 @@ function landFx(id,o){
   const soft=o&&o.soft;
   if(c.ty==='spell'){if(!soft)magicFx(el,c);return}
   let L=levelOf(c);if(soft)L=Math.max(0,L-2);
-  el.style.setProperty('--lift',[-16,-34,-46,-60,-78][L]+'px');el.style.setProperty('--ss',[1.14,1.28,1.36,1.44,1.55][L]);
+  el.style.setProperty('--lift',[-16,-34,-46,-60,-92][L]+'px');el.style.setProperty('--ss',[1.14,1.28,1.36,1.44,1.55][L]);
   el.classList.remove('landing');void el.offsetWidth;el.classList.add('landing');
   setTimeout(()=>el.classList.remove('landing'),520);
   setTimeout(()=>impact(c.x+CW/2,c.y+CH-3,L),190);
@@ -999,22 +999,56 @@ function impact(cx,cy,L){
     const r=fxSpan(box,'left:'+(cx-22)+'px;top:'+(cy-8)+'px;width:44px;height:16px;border:2px solid #e8dcc0aa;border-radius:50%');
     r.animate([{transform:'scale(.4)',opacity:.8},{transform:'scale('+(L===4?6.5:4.5)+')',opacity:0}],{duration:520,easing:'ease-out',fill:'forwards'}).onfinish=()=>r.remove();
   }
-  if(L>=2){const amp=[0,0,1.5,3,5][L];box.style.setProperty('--amp',amp+'px');pulse(box,'fshake')}
-  if(L===4)cracks(cx,cy);
+  if(L>=2){const amp=[0,0,1.5,3,7][L];box.style.setProperty('--amp',amp+'px');pulse(box,'fshake')}
+  if(L===4)rockImpact(cx,cy);
 }
-function cracks(cx,cy){
-  const ns='http://www.w3.org/2000/svg',R=170,svg=document.createElementNS(ns,'svg');
-  svg.setAttribute('width',R*2);svg.setAttribute('height',R*2);svg.style.cssText='position:absolute;left:'+(cx-R)+'px;top:'+(cy-R)+'px;pointer-events:none;z-index:0;overflow:visible';
-  const n=9;
-  for(let i=0;i<n;i++){
-    let a=Math.PI*2*i/n+Math.random()*.5,x=R,y=R,len=70+Math.random()*90,pts=R+','+R;
-    for(let k=0;k<5;k++){a+=(Math.random()-.5)*.8;x+=Math.cos(a)*len/5;y+=Math.sin(a)*len/5*.6;pts+=' '+x.toFixed(1)+','+y.toFixed(1)}
-    [['#07100c',3.5,1],['#ffb44a',1.2,.7]].forEach(([col,w,op])=>{
-      const l=document.createElementNS(ns,'polyline');l.setAttribute('points',pts);l.setAttribute('fill','none');l.setAttribute('stroke',col);l.setAttribute('stroke-width',w);l.setAttribute('stroke-linejoin','round');l.setAttribute('opacity',op);svg.append(l);
-    });
+function rockImpact(cx,cy){
+  const ns='http://www.w3.org/2000/svg',R=185,H=.58,svg=document.createElementNS(ns,'svg'),box=$('#mine');
+  const mk=(t,a)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);return e};
+  svg.setAttribute('width',R*2);svg.setAttribute('height',R*2);
+  svg.style.cssText='position:absolute;left:'+(cx-R)+'px;top:'+(cy-R)+'px;pointer-events:none;z-index:0;overflow:visible';
+  const crater=mk('ellipse',{cx:R,cy:R,rx:172,ry:172*H,fill:'#150d07',opacity:.92});svg.append(crater);
+  const tans=['#c9a171','#b58a5a','#a67c52','#bf956a','#9c7248'];
+  const rings=[[0,24,6],[24,50,9],[50,84,12],[84,126,16],[126,170,20]];
+  const P=(r,a)=>(R+Math.cos(a)*r).toFixed(1)+','+(R+Math.sin(a)*r*H).toFixed(1),slabs=[];
+  rings.forEach(([r0,r1,n],k)=>{
+    const off=Math.random()*6.28;
+    for(let q=0;q<n;q++){
+      const a0=off+6.2832*q/n+(Math.random()-.5)*.1,a1=off+6.2832*(q+1)/n-(Math.random()-.5)*.1-.03,am=(a0+a1)/2,j=()=>1+(Math.random()-.5)*.12;
+      const pts=r0===0?[P(0,0),P(r1*j(),a0),P(r1*1.04*j(),am),P(r1*j(),a1)]:[P(r0*j(),a0),P(r1*j(),a0),P(r1*1.06*j(),am+(Math.random()-.5)*.1),P(r1*j(),a1),P(r0*j(),a1)];
+      const g=mk('g',{});
+      g.append(mk('polygon',{points:pts.join(' '),fill:tans[Math.floor(Math.random()*tans.length)],stroke:'#3b2716','stroke-width':1.6,'stroke-linejoin':'round'}));
+      g.append(mk('polyline',{points:pts.slice(1,r0===0?3:4).join(' '),fill:'none',stroke:'#f0d6a8',opacity:.5,'stroke-width':1}));
+      svg.append(g);slabs.push([g,k,am]);
+    }
+  });
+  box.prepend(svg);
+  slabs.forEach(([g,k,a])=>{
+    g.style.transformBox='fill-box';g.style.transformOrigin='50% 50%';
+    const lift=10+k*9,fin=k>=3?5+k:0,tilt=k>=2?(Math.cos(a)>0?1:-1)*(2+k):0,t=(y,r,sc)=>'translateY('+(-y)+'px) scale('+sc+') rotate('+r+'deg)';
+    g.animate([
+      {transform:t(0,0,.5),opacity:0,offset:0},
+      {transform:t(lift,tilt,1.08),opacity:1,offset:.1},
+      {transform:t(fin,tilt*.6,1),opacity:1,offset:.22},
+      {transform:t(fin,tilt*.6,1),opacity:1,offset:.78},
+      {transform:t(fin,tilt*.6,1),opacity:0,offset:1}
+    ],{duration:3200,delay:k*45,easing:'cubic-bezier(.2,.8,.3,1)',fill:'both'});
+  });
+  crater.animate([{opacity:0},{opacity:.92,offset:.08},{opacity:.92,offset:.78},{opacity:0}],{duration:3200,fill:'both'});
+  setTimeout(()=>svg.remove(),3700);
+  const fl=fxSpan(box,'left:'+(cx-90)+'px;top:'+(cy-52)+'px;width:180px;height:104px;background:radial-gradient(ellipse,#fff0c8cc,#ffd08000 70%)');
+  fl.animate([{opacity:.9,transform:'scale(.5)'},{opacity:0,transform:'scale(1.6)'}],{duration:380,fill:'forwards'}).onfinish=()=>fl.remove();
+  for(let q=0;q<18;q++){
+    const sz=8+Math.random()*14,a=Math.random()*6.283,dist=40+Math.random()*140,hgt=45+Math.random()*100,rnd=()=>Math.round(Math.random()*22);
+    const d=fxSpan(box,'left:'+(cx-sz/2)+'px;top:'+(cy-sz/2)+'px;width:'+sz+'px;height:'+sz*.8+'px;border-radius:0;background:'+tans[q%5]+';clip-path:polygon('+rnd()+'% '+rnd()+'%,'+(100-rnd())+'% '+rnd()+'%,'+(100-rnd())+'% '+(100-rnd())+'%,'+rnd()+'% '+(100-rnd())+'%)');
+    const dx=Math.cos(a)*dist,dy=Math.sin(a)*dist*.5;
+    d.animate([
+      {transform:'translate(0,0) rotate(0deg)',opacity:1},
+      {transform:'translate('+dx*.6+'px,'+(dy-hgt)+'px) rotate('+(Math.random()*300)+'deg)',opacity:1,offset:.45},
+      {transform:'translate('+dx+'px,'+(dy+6)+'px) rotate('+(Math.random()*700)+'deg)',opacity:.9,offset:.85},
+      {transform:'translate('+dx+'px,'+(dy+6)+'px)',opacity:0}
+    ],{duration:900+Math.random()*500,delay:Math.random()*80,easing:'cubic-bezier(.3,.6,.4,1)',fill:'forwards'}).onfinish=()=>d.remove();
   }
-  $('#mine').prepend(svg);
-  svg.animate([{transform:'scale(.15)',opacity:0,transformOrigin:'50% 50%'},{transform:'scale(1)',opacity:1,offset:.1,transformOrigin:'50% 50%'},{opacity:1,offset:.72},{opacity:0,transform:'scale(1)',transformOrigin:'50% 50%'}],{duration:2600,easing:'ease-out',fill:'forwards'}).onfinish=()=>svg.remove();
 }
 function magicFx(el,c){
   const cols=(c.col&&c.col.length?c.col:['C']).map(k=>MC[k]||MC.C),main=cols[0],box=$('#mine'),cx=c.x+CW/2,cy=c.y+CH/2;
@@ -1192,8 +1226,31 @@ function renderDecks(){
     box.append(row);
   });
 }
-function loadSaved(id){
-  const d=getDecks().find(x=>x.id===id);if(!d)return;
+async function upgradeSaved(d){
+  // decks saved before v22 lack card type and colour: fetch them once and keep them
+  const names=[...new Set(d.cards.filter(e=>e.c.ty===undefined).map(e=>e.c.name.split(' // ')[0]))];
+  if(!names.length)return false;
+  const found={};
+  for(let i=0;i<names.length;i+=75){
+    try{
+      const r=await fetch('https://api.scryfall.com/cards/collection',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({identifiers:names.slice(i,i+75).map(name=>({name}))})});
+      const j=await r.json();(j.data||[]).forEach(c=>found[c.name.split(' // ')[0].toLowerCase()]=entry(c));
+    }catch(e){return false}
+    await sleep(120);
+  }
+  d.cards.forEach(e=>{
+    const en=found[e.c.name.split(' // ')[0].toLowerCase()];
+    if(en){e.c.ty=en.ty;e.c.col=en.col;if(en.faces)e.c.faces=en.faces}
+    else if(e.c.ty===undefined){e.c.ty='other';e.c.col=[]}
+  });
+  return true;
+}
+async function loadSaved(id){
+  const list=getDecks(),d=list.find(x=>x.id===id);if(!d)return;
+  if(d.cards.some(e=>e.c.ty===undefined)){
+    $('#msg').textContent='Updating this saved deck with card types and colours…';
+    if(await upgradeSaved(d))putDecks(list);
+  }
   S.deck=unpackDeck(d);lastMissing=[];$('#dname').value=d.name;
   newGame();$('#imp').classList.remove('on');
 }
