@@ -41,7 +41,7 @@ textarea{width:100%;height:min(220px,24vh);background:#160d06;color:var(--ink);b
 .grid img{width:100%;border-radius:6px}
 .grid div{font-size:12px;background:#222;border-radius:6px;padding:6px;aspect-ratio:5/7}
 #msg{font-size:13px;color:var(--gold);min-height:18px}
-#peek{position:fixed;right:14px;top:84px;width:min(300px,32vw);display:block;opacity:0;visibility:hidden;transition:opacity .6s,visibility .6s;z-index:120;cursor:pointer}
+#peek{position:fixed;right:14px;top:84px;width:min(300px,32vw);display:block;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s;z-index:120;cursor:pointer}
 #peek.on{opacity:1;visibility:visible;transition:opacity .15s}
 #peek img{width:100%;display:block;border-radius:14px;box-shadow:0 12px 30px #000c}
 #peek .nm{background:#222;border-radius:14px;padding:16px;font-size:18px;aspect-ratio:5/7}
@@ -408,6 +408,7 @@ function cardEl(c,cls){
   return d;
 }
 function render(){
+  if(!drag)document.querySelectorAll('body > .card.drag').forEach(x=>x.remove());
   const bf=$('#mine');bf.querySelectorAll('.card,.pt,.more').forEach(e=>e.remove());
   S.bf.forEach(c=>{const e=cardEl(c);e.style.left=c.x+'px';e.style.top=c.y+'px';bf.append(e)});
   S.bf.forEach(c=>{
@@ -448,13 +449,15 @@ function zoom(id){const f=find(id);if(!f)return;const c=S[f[0]][f[1]];if(!c.img)
 document.addEventListener('pointerdown',e=>{
   if(e.pointerType==='mouse'&&e.button!==0)return;
   const el=e.target.closest('.card[data-id]');if(!el)return;
+  if(drag){if(Date.now()-drag.t0<15000)return;if(drag.ghost)drag.ghost.remove();drag=null}
   const id=+el.dataset.id,f=find(id);
-  drag={el,id,zone:f&&f[0],sx:e.clientX,sy:e.clientY,moved:false,long:false};
-  timer=setTimeout(()=>{if(drag&&!drag.moved){drag.long=true;const q=find(id),pc=q&&S[q[0]][q[1]];if(pc&&pc.under&&pc.under.length){drag.whole=true;el.classList.add('armed')}else zoom(id)}},450);
+  drag={el,id,zone:f&&f[0],sx:e.clientX,sy:e.clientY,moved:false,long:false,pid:e.pointerId,t0:Date.now()};
+  if(!TG)showPeek(id,true);
+  timer=setTimeout(()=>{if(drag&&!drag.moved){drag.long=true;const q=find(id),pc=q&&S[q[0]][q[1]];if(pc&&pc.under&&pc.under.length){drag.whole=true;el.classList.add('armed')}}},450);
   el.setPointerCapture(e.pointerId);
 });
 document.addEventListener('pointermove',e=>{
-  if(!drag)return;
+  if(!drag||e.pointerId!==drag.pid)return;
   if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>8){
     drag.moved=true;clearTimeout(timer);
     const gh=drag.el.cloneNode(true);gh.classList.remove('t');gh.classList.add('drag');gh.removeAttribute('data-id');gh.style.cssText='width:'+CW+'px;height:'+CH+'px';
@@ -474,11 +477,10 @@ document.addEventListener('pointermove',e=>{
 });
 function zoneAt(x,y){const t=document.elementsFromPoint(x,y).find(p=>p.dataset&&p.dataset.zone&&!p.classList.contains('card'));return t&&t.dataset.zone}
 document.addEventListener('pointerup',e=>{
-  if(!drag)return;clearTimeout(timer);
+  if(!drag||e.pointerId!==drag.pid)return;clearTimeout(timer);hidePeek();
   const d=drag;drag=null;document.querySelectorAll('.z').forEach(b=>b.classList.remove('hl'));$('#lands').classList.remove('hl');endDragFx();
   if(d.moved){
     d.fr=d.ghost.getBoundingClientRect();d.ghost.remove();const fr0=d.fr;
-    clearTimeout(pk);pk=setTimeout(hidePeek,3000);
     const ofe=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x.classList&&x.classList.contains('ofield'));
     if(ofe){giveCard(d.id,ofe.dataset.pid,e.clientX,e.clientY);return}
     let z=zoneAt(e.clientX,e.clientY);
@@ -509,10 +511,10 @@ document.addEventListener('pointerup',e=>{
     const onField=d.zone==='bf'||d.zone==='land';
     if(onField)showMore(d.id);
     if(onField&&lastTap.id===d.id&&now-lastTap.t<350){const c=S[d.zone].find(c=>c.id===d.id);if(c){setTapped(c,!c.t);render()}lastTap={id:0,t:0}}
-    else{lastTap={id:d.id,t:now};showPeek(d.id);if(d.zone==='hand')showHandMore(d.id)}
+    else{lastTap={id:d.id,t:now};if(d.zone==='hand')showHandMore(d.id)}
   }
 });
-document.addEventListener('pointercancel',()=>{if(drag&&drag.ghost)drag.ghost.remove();drag=null;endDragFx();clearTimeout(timer);render()});
+document.addEventListener('pointercancel',e=>{if(!drag||e.pointerId!==drag.pid)return;hidePeek();if(drag.ghost)drag.ghost.remove();drag=null;endDragFx();clearTimeout(timer);render()});
 ['gesturestart','gesturechange','gestureend','dblclick'].forEach(t=>document.addEventListener(t,e=>e.preventDefault()));
 let lastEnd=0;
 document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastEnd<350&&e.target.closest('#bf,#lands,#hand'))e.preventDefault();lastEnd=n},{passive:false});
@@ -651,7 +653,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, rocky impact v24';
+const BUILD='Build: Oct 23, hold-to-preview v26';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -805,7 +807,20 @@ function mini(c,cls){
   if(c.i){const i=document.createElement('img');i.src=c.i;i.alt=c.n;i.draggable=false;d.append(i)}
   else{d.innerHTML='<div class="nm"></div>';d.firstChild.textContent=c.n}
   if(c.n>1){d.classList.add('pile');const b=document.createElement('span');b.className='cnt';b.textContent='×'+c.n;d.append(b)}
-  d.onclick=()=>{if(Date.now()-justPanned<=150)return;if(TG){if(!cls&&c.g)addArrow({k:'c',g:c.g});else endTarget();return}peekRaw(c.i,c.n)};return d;
+  d.onclick=()=>{if(Date.now()-justPanned<=150)return;if(TG){if(!cls&&c.g)addArrow({k:'c',g:c.g});else endTarget();return}};holdPeek(d,c.i,c.n);return d;
+}
+function peekHold(img,name){
+  const p=$('#peek');p.innerHTML='';
+  if(img){const i=document.createElement('img');i.src=img;i.alt=name;p.append(i)}
+  else{const n=document.createElement('div');n.className='nm';n.textContent=name;p.append(n)}
+  p.classList.add('on');clearTimeout(pk);
+}
+function holdPeek(el,img,name){
+  let on=false,sx=0,sy=0;
+  const off=()=>{if(on){on=false;hidePeek()}};
+  el.addEventListener('pointerdown',e=>{if(TG||(e.pointerType==='mouse'&&e.button!==0))return;on=true;sx=e.clientX;sy=e.clientY;peekHold(img,name)});
+  el.addEventListener('pointerup',off);el.addEventListener('pointercancel',off);el.addEventListener('pointerleave',off);
+  el.addEventListener('pointermove',e=>{if(on&&Math.hypot(e.clientX-sx,e.clientY-sy)>8)off()});
 }
 function peekRaw(img,name){
   const p=$('#peek');p.innerHTML='';
@@ -827,7 +842,7 @@ function fillOz(){
   [...(p[ozone]||[])].reverse().forEach(c=>{
     const d=document.createElement('div');
     if(c.i){d.style.padding=0;const i=document.createElement('img');i.src=c.i;i.alt=c.n;d.append(i)}else d.textContent=c.n;
-    d.onclick=()=>peekRaw(c.i,c.n);g.append(d);
+    holdPeek(d,c.i,c.n);g.append(d);
   });
 }
 $('#bNet').onclick=()=>$('#net').classList.add('on');
@@ -1112,7 +1127,7 @@ function showReveal(m){
     m.cards.forEach(c=>{
       const d=document.createElement('div');
       if(c.img){d.style.padding=0;const im=document.createElement('img');im.src=c.img;im.alt=c.name;d.append(im)}else d.textContent=c.name;
-      d.onclick=()=>peekRaw(c.img,c.name);g.append(d);
+      holdPeek(d,c.img,c.name);g.append(d);
     });
     $('#rv').classList.add('on');
     sysMsg(m.from+' revealed their hand: '+(m.cards.map(c=>c.name).join(', ')||'empty'));toast(m.from+' reveals their hand');
@@ -1343,7 +1358,7 @@ function fillScry(){
     const t=document.createElement('div');t.className='sct'+(o.b?' bot':'');
     const pic=document.createElement('div');pic.className='pic';
     if(o.c.img){const im=document.createElement('img');im.src=o.c.img;im.alt=o.c.name;pic.append(im)}else pic.textContent=o.c.name;
-    pic.onclick=()=>peekRaw(o.c.img,o.c.name);
+    holdPeek(pic,o.c.img,o.c.name);
     const r=document.createElement('div');r.className='row';
     r.append(
       mkb('◀',()=>{if(i>0){[SCL[i-1],SCL[i]]=[SCL[i],SCL[i-1]];fillScry()}}),
