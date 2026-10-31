@@ -176,8 +176,14 @@ body.noanim *{animation:none!important}
 .kxr.kxu{z-index:auto}
 .kx-vig{left:0;top:0;width:100%;height:18px;border-radius:7px 7px 0 0;background:linear-gradient(90deg,transparent 40%,#fff3c8cc 50%,transparent 60%) 0 0/250% 100% no-repeat,linear-gradient(#ffb347b0,#ffb34700);animation:vigb 3.6s ease-in-out infinite}
 @keyframes vigb{0%,100%{opacity:.45;background-position:150% 0,0 0}50%{opacity:1;background-position:-50% 0,0 0}}
-.kx-hex{inset:0;border-radius:8px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'><path fill='%235fe0d0' fill-opacity='.55' fill-rule='evenodd' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/></svg>");background-size:14px 24px;-webkit-mask-image:radial-gradient(ellipse at center,transparent 48%,#000 100%);mask-image:radial-gradient(ellipse at center,transparent 48%,#000 100%);box-shadow:inset 0 0 12px 1px #5fe0d088;animation:hexp 4.2s ease-in-out infinite}
-@keyframes hexp{0%,100%{opacity:.35}50%{opacity:.95}}
+#hexcss{display:none}
+.kx-hex{inset:0;border-radius:8px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'><path fill='%239b5cff' fill-opacity='.8' fill-rule='evenodd' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/></svg>");background-size:14px 24px;-webkit-mask-image:radial-gradient(ellipse at center,transparent 44%,#000 100%);mask-image:radial-gradient(ellipse at center,transparent 44%,#000 100%);box-shadow:inset 0 0 14px 1px #a56bffaa;animation:hexp 4.2s ease-in-out infinite,hexj 2.9s linear infinite}
+.kx-hex::before{content:'';position:absolute;inset:0;border-radius:8px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .62  0 0 0 0 .36  0 0 0 0 1  0 0 0 2.1 -.85'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");opacity:.95;animation:stat .45s steps(1) infinite}
+.kx-hex::after{content:'';position:absolute;inset:1px;border-radius:7px;border:1px solid #e0c2ff;box-shadow:0 0 8px #b57bff,inset 0 0 8px #b57bff;opacity:0;animation:zap 2.3s steps(1) infinite}
+@keyframes hexp{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes stat{0%{background-position:0 0}20%{background-position:-23px 17px}40%{background-position:31px -9px}60%{background-position:-12px -28px}80%{background-position:9px 21px}100%{background-position:-30px 4px}}
+@keyframes hexj{0%,90%,100%{translate:0 0}91%{translate:2px 0}93%{translate:-2px 1px}95%{translate:1px -1px}97%{translate:-1px 0}}
+@keyframes zap{0%{opacity:0}5%{opacity:.95}7%{opacity:0}34%{opacity:0}36%{opacity:.7}37%{opacity:0}38%{opacity:.9}40%{opacity:0}72%{opacity:0}74%{opacity:.8}75%{opacity:0}100%{opacity:0}}
 .kx-ward{left:50%;top:-26px;width:20px;height:20px;margin-left:-10px;border:2px dotted #d9bfff;border-radius:50%;box-shadow:0 0 10px #b98cff,inset 0 0 6px #b98cff;animation:kspin 7s linear infinite}
 .kx-ward::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;background:#fff1c9;transform:rotate(45deg);box-shadow:0 0 6px #ffd45a}
 @keyframes kspin{to{rotate:360deg}}
@@ -673,7 +679,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, keyword effects v31';
+const BUILD='Build: Oct 23, purple static hexproof v32';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
