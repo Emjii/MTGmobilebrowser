@@ -697,7 +697,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, blade swing first strike v38';
+const BUILD='Build: Oct 23, rising blade arc first strike v39';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -1260,29 +1260,24 @@ function kwPulse(r,k){
   }else if(k==='ind'){
     [[0,0],[w,0],[0,h],[w,h]].forEach(([cx,cy],i)=>{const sz=RN(8,12);spark(r,'left:'+(cx-sz/2)+'px;top:'+(cy-sz/2)+'px;width:'+sz+'px;height:'+sz+'px;background:radial-gradient(circle,#fff,#bfefff 40%,#bfefff00 70%);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);z-index:5',[{transform:'scale(0) rotate(0deg)',opacity:0},{transform:'scale(1.5) rotate(45deg)',opacity:1,offset:.45},{transform:'scale(0) rotate(90deg)',opacity:0}],{duration:700,delay:i*140})});
   }else if(k==='fst'){
-    const mir=(r._i||0)%2===1,L=Math.round(w*1.3),px=-w*.1,py=-h*.25;
-    const wrap=fxSpan(r,'left:'+(mir?w-px-L:px-L)+'px;top:'+(py-L)+'px;width:'+2*L+'px;height:'+2*L+'px;border-radius:0;z-index:6'+(mir?';transform:scaleX(-1)':''));
-    const sw=document.createElement('div');sw.style.cssText='position:absolute;inset:0;opacity:0';
-    const mk=(css)=>{const d=document.createElement('div');d.style.cssText='position:absolute;'+css;sw.append(d)};
-    mk('inset:0;border-radius:50%;background:conic-gradient(from -80deg at 50% 50%,rgba(190,225,255,0) 0deg,rgba(235,248,255,.95) 76deg,rgba(235,248,255,0) 76.4deg);-webkit-mask-image:radial-gradient(circle,transparent 58%,#000 59%);mask-image:radial-gradient(circle,transparent 58%,#000 59%);filter:blur(.6px)');
-    mk('left:calc(50% - 3px);bottom:50%;width:6px;height:'+(L*.98)+'px;background:linear-gradient(#fff,#d6ecff 60%,#8fc4ff);clip-path:polygon(50% 0,100% 7%,100% 100%,0 100%,0 7%);filter:drop-shadow(0 0 6px #bfe4ff)');
-    mk('left:calc(50% - 10px);top:calc(50% - 2px);width:20px;height:4px;border-radius:2px;background:#ffe9a0;box-shadow:0 0 5px #ffd45a');
-    mk('left:calc(50% - 2px);top:calc(50% + 2px);width:4px;height:15px;border-radius:2px;background:#8a6a34');
-    wrap.append(sw);
-    sw.animate([
-      {transform:'rotate(5deg)',opacity:0,offset:0,easing:'ease-out'},
-      {transform:'rotate(-9deg)',opacity:1,offset:.1,easing:'cubic-bezier(.55,.05,.95,.4)'},
-      {transform:'rotate(128deg)',opacity:1,offset:.46},
-      {transform:'rotate(128deg)',opacity:1,offset:.6},
-      {transform:'rotate(128deg)',opacity:0,offset:1}
-    ],{duration:700,fill:'both'}).onfinish=()=>wrap.remove();
+    // a glowing blade arc that sweeps up the card, bottom to top
+    const mir=(r._i||0)%2===1,tilt=mir?8:-8,W=w*1.45,Hc=h*.36,up=h*1.4;
+    const cres='url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 34\' preserveAspectRatio=\'none\'><defs><linearGradient id=\'g\' x1=\'0\' x2=\'1\'><stop offset=\'0\' stop-color=\'%238fe9ff\' stop-opacity=\'0\'/><stop offset=\'.22\' stop-color=\'%23bff6ff\'/><stop offset=\'.5\' stop-color=\'%23ffffff\'/><stop offset=\'.78\' stop-color=\'%23bff6ff\'/><stop offset=\'1\' stop-color=\'%238fe9ff\' stop-opacity=\'0\'/></linearGradient></defs><path d=\'M0 31 Q50 -20 100 31 Q50 9 0 31Z\' fill=\'url(%23g)\'/></svg>")';
+    [[0,1],[34,.5],[68,.3],[102,.16]].forEach(([dl,op],n)=>{
+      const sp=fxSpan(r,'left:'+(w/2-W/2)+'px;top:'+(h-Hc*.15)+'px;width:'+W+'px;height:'+Hc+'px;border-radius:0;background:'+cres+' center/100% 100% no-repeat;filter:drop-shadow(0 0 '+(n?4:8)+'px #5fd8ff)'+(n?'':' drop-shadow(0 0 2px #fff)')+';z-index:6');
+      sp.animate([
+        {transform:'translateY(0) rotate('+tilt+'deg) scale(.7,.4)',opacity:0,offset:0},
+        {transform:'translateY('+-up*.08+'px) rotate('+tilt+'deg) scale(1,.8)',opacity:op,offset:.14},
+        {transform:'translateY('+-up*.62+'px) rotate('+tilt+'deg) scale(1.06,1.15)',opacity:op,offset:.58},
+        {transform:'translateY('+-up+'px) rotate('+tilt+'deg) scale(.9,.6)',opacity:0,offset:1}
+      ],{duration:520,delay:dl,fill:'both',easing:'cubic-bezier(.3,0,.25,1)'}).onfinish=()=>sp.remove();
+    });
     setTimeout(()=>{
       if(!r.isConnected)return;
-      const ix=mir?w-(px+L*Math.sin(128*Math.PI/180)):px+L*Math.sin(128*Math.PI/180),iy=py-L*Math.cos(128*Math.PI/180);
-      spark(r,'left:'+(ix-26)+'px;top:'+(iy-26)+'px;width:52px;height:52px;background:radial-gradient(circle,#fff,#bfe4ffcc 35%,#bfe4ff00 70%);z-index:7',[{transform:'scale(.2)',opacity:1},{transform:'scale(1.5)',opacity:0}],{duration:360,easing:'ease-out'});
-      spark(r,'left:0;top:0;width:'+w+'px;height:'+h+'px;border-radius:8px;background:#ffffff;z-index:6',[{opacity:.45},{opacity:0}],{duration:220});
-      for(let n=0;n<10;n++){const a=RN(0,6.283),d=RN(18,46);spark(r,'left:'+(ix-1.5)+'px;top:'+(iy-1.5)+'px;width:3px;height:3px;background:#fff;box-shadow:0 0 6px #bfe4ff;z-index:7',[{transform:'translate(0,0)',opacity:1},{transform:'translate('+Math.cos(a)*d+'px,'+Math.sin(a)*d+'px)',opacity:0}],{duration:RN(280,520),easing:'ease-out'})}
-    },330);
+      spark(r,'left:0;top:0;width:'+w+'px;height:'+h+'px;border-radius:8px;background:#e8fbff;z-index:5',[{opacity:.4},{opacity:0}],{duration:260});
+      for(let n=0;n<14;n++){const sx=RN(-w*.2,w*1.2),sy=RN(h*.15,h*.85),a=RN(-2.6,-.5),d=RN(14,40);
+        spark(r,'left:'+sx+'px;top:'+sy+'px;width:3px;height:3px;background:#fff;box-shadow:0 0 6px #5fd8ff;z-index:7',[{transform:'translate(0,0)',opacity:1},{transform:'translate('+Math.cos(a)*d+'px,'+Math.sin(a)*d+'px)',opacity:0}],{duration:RN(260,520),easing:'ease-out'})}
+    },170);
   }else if(k==='dbl'){
     const cr=d=>'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 40\' preserveAspectRatio=\'none\'><defs><linearGradient id=\'g\' x1=\'0\' x2=\'1\'><stop offset=\'0\' stop-color=\'%23ffe27a\' stop-opacity=\'0\'/><stop offset=\'.5\' stop-color=\'%23fff3b0\'/><stop offset=\'1\' stop-color=\'%23ffe27a\' stop-opacity=\'0\'/></linearGradient></defs><path d=\''+d+'\' fill=\'url(%23g)\'/></svg>")';
     [['M2 22 Q50 -8 98 22 Q50 8 2 22Z',0],['M8 36 Q50 6 92 36 Q50 20 8 36Z',170]].forEach(([d,dl])=>{
