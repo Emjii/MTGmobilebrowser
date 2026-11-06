@@ -191,8 +191,6 @@ body.noanim *{animation:none!important}
 @keyframes shp{0%,100%{opacity:.6}50%{opacity:1}}
 @keyframes rip1{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.12) rotate(3deg)}}
 @keyframes rip2{0%,100%{transform:scale(1.1) rotate(0deg)}50%{transform:scale(.96) rotate(-3deg)}}
-.kx-ds{left:4%;top:50%;width:92%;height:40%;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='%23ffe27a' stop-opacity='0'/><stop offset='.5' stop-color='%23ffe27a'/><stop offset='1' stop-color='%23ffe27a' stop-opacity='0'/></linearGradient></defs><path d='M2 22 Q50 -8 98 22 Q50 8 2 22Z M8 36 Q50 6 92 36 Q50 20 8 36Z' fill='url(%23g)'/></svg>") center/100% 100% no-repeat;filter:drop-shadow(0 0 5px #ffd45a);animation:dsp 3.6s ease-in-out infinite}
-@keyframes dsp{0%,100%{opacity:.4}50%{opacity:.85}}
 .kx-pld{left:-15px;top:-13px;width:50px;height:43px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 52'><defs><linearGradient id='hg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23fff8d6' stop-opacity='.85'/><stop offset='.5' stop-color='%23ffd966' stop-opacity='.55'/><stop offset='1' stop-color='%23e0a21a' stop-opacity='.32'/></linearGradient></defs><path d='M9 50 C8 31 19 19 35 15 C40 14 43 15 45 18 C34 23 31 33 31 50Z' fill='url(%23hg)' stroke='%23ffe9a0' stroke-width='1' stroke-opacity='.8'/><path d='M3 50 C1 22 16 5 45 3 C51 3 55 6 57 11 C42 14 29 25 26 50 Z' fill='url(%23hg)' stroke='%23ffe9a0' stroke-width='1.4'/><path d='M3 50 C5 46 9 46 12 49 C15 46 19 46 22 49 C24 47 26 47 28 49' fill='none' stroke='%23fff3b0' stroke-width='1.2' stroke-opacity='.9'/><path d='M10 42 C12 30 21 21 34 17 M14 44 C16 36 21 31 29 28 M17 36 C19 32 24 31 27 34 C28 36 26 38 24 37 M22 26 C25 22 31 21 34 24 C35 26 33 28 31 27' fill='none' stroke='%23fff6c8' stroke-width='.9' stroke-opacity='.95' stroke-linecap='round'/><g fill='%23ffe58a' fill-opacity='.35' stroke='%23fff3b0' stroke-width='1'><circle cx='37' cy='22' r='5.2'/><circle cx='31' cy='38' r='4.6'/></g><g fill='none' stroke='%23ffffff' stroke-width='.8' stroke-opacity='.9'><circle cx='37' cy='22' r='2.8'/><circle cx='31' cy='38' r='2.4'/></g><g fill='%23ffffff'><circle cx='37' cy='22' r='1.1'/><circle cx='31' cy='38' r='1'/></g><path d='M4 45 C6 24 17 10 44 5' fill='none' stroke='%23ffffff' stroke-width='.8' stroke-opacity='.8' stroke-dasharray='1.2 2.2'/></svg>") center/100% 100% no-repeat;filter:drop-shadow(0 0 3px #ffd45aaa);animation:pldg 3.6s ease-in-out infinite}
 .kx-pld.r{left:auto;right:-15px;transform:scaleX(-1)}
 .kx-pld::after{content:'';position:absolute;left:36%;top:34%;width:3px;height:3px;border-radius:50%;background:#fff6c8;box-shadow:0 0 6px #ffd45a;animation:mote 3.4s ease-in infinite}
@@ -697,7 +695,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, rising blade arc first strike v39';
+const BUILD='Build: Oct 23, golden diagonal double strike v40';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -1220,7 +1218,6 @@ function makeRig(parent,kw,x,y,tapped,wd){
   const rig=document.createElement('div');rig.className='kxr';rig.style.cssText=base;
   const add=cls=>{const d=document.createElement('div');d.className=cls;rig.append(d)};
   if(kw.includes('vig')){add('kx-pld');add('kx-pld r')}
-  if(kw.includes('dbl'))add('kx-ds');
   if(kw.includes('shr'))add('kx-shroud');
   if(kw.includes('hex'))add('kx-hex');
   if(kw.includes('war')){const ch=document.createElement('div');ch.className='kx-chain';ch.style.cssText='left:-7px;top:-7px;width:'+(CW+14)+'px;height:'+(CH+14)+'px';ch.innerHTML=chainSVG(wd);rig.append(ch)}
@@ -1279,12 +1276,28 @@ function kwPulse(r,k){
         spark(r,'left:'+sx+'px;top:'+sy+'px;width:3px;height:3px;background:#fff;box-shadow:0 0 6px #5fd8ff;z-index:7',[{transform:'translate(0,0)',opacity:1},{transform:'translate('+Math.cos(a)*d+'px,'+Math.sin(a)*d+'px)',opacity:0}],{duration:RN(260,520),easing:'ease-out'})}
     },170);
   }else if(k==='dbl'){
-    const cr=d=>'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 40\' preserveAspectRatio=\'none\'><defs><linearGradient id=\'g\' x1=\'0\' x2=\'1\'><stop offset=\'0\' stop-color=\'%23ffe27a\' stop-opacity=\'0\'/><stop offset=\'.5\' stop-color=\'%23fff3b0\'/><stop offset=\'1\' stop-color=\'%23ffe27a\' stop-opacity=\'0\'/></linearGradient></defs><path d=\''+d+'\' fill=\'url(%23g)\'/></svg>")';
-    [['M2 22 Q50 -8 98 22 Q50 8 2 22Z',0],['M8 36 Q50 6 92 36 Q50 20 8 36Z',170]].forEach(([d,dl])=>{
-      spark(r,'left:4%;top:50%;width:92%;height:40%;border-radius:0;background:'+cr(d)+' center/100% 100% no-repeat;filter:drop-shadow(0 0 9px #ffd45a) brightness(1.5);-webkit-mask-image:linear-gradient(90deg,transparent 35%,#000 50%,transparent 65%);mask-image:linear-gradient(90deg,transparent 35%,#000 50%,transparent 65%);-webkit-mask-size:300% 100%;mask-size:300% 100%;z-index:5',
-        [{maskPosition:'110% 0',webkitMaskPosition:'110% 0'},{maskPosition:'-10% 0',webkitMaskPosition:'-10% 0'}],{duration:400,delay:dl,easing:'ease-in'});
+    // two golden blade arcs, one rising up-left and one up-right
+    const cres='url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 34\' preserveAspectRatio=\'none\'><defs><linearGradient id=\'g\' x1=\'0\' x2=\'1\'><stop offset=\'0\' stop-color=\'%23ffd45a\' stop-opacity=\'0\'/><stop offset=\'.22\' stop-color=\'%23ffe27a\'/><stop offset=\'.5\' stop-color=\'%23fff8d0\'/><stop offset=\'.78\' stop-color=\'%23ffe27a\'/><stop offset=\'1\' stop-color=\'%23ffd45a\' stop-opacity=\'0\'/></linearGradient></defs><path d=\'M0 31 Q50 -20 100 31 Q50 9 0 31Z\' fill=\'url(%23g)\'/></svg>")';
+    const W=w*1.45,Hc=h*.36,D=h*1.7,cx=w/2,cy=h/2;
+    [[-35,0],[35,190]].forEach(([phi,base])=>{
+      const a=phi*Math.PI/180,ux=Math.sin(a),uy=-Math.cos(a),sx=cx-ux*D/2,sy=cy-uy*D/2;
+      [[0,1],[34,.5],[68,.3],[102,.16]].forEach(([dl,op],n)=>{
+        const sp=fxSpan(r,'left:'+(sx-W/2)+'px;top:'+(sy-Hc/2)+'px;width:'+W+'px;height:'+Hc+'px;border-radius:0;background:'+cres+' center/100% 100% no-repeat;filter:drop-shadow(0 0 '+(n?4:8)+'px #ffb800)'+(n?'':' drop-shadow(0 0 2px #fff6c8)')+';z-index:6');
+        const at=t=>'translate('+(ux*D*t)+'px,'+(uy*D*t)+'px) rotate('+phi+'deg) ';
+        sp.animate([
+          {transform:at(0)+'scale(.7,.4)',opacity:0,offset:0},
+          {transform:at(.1)+'scale(1,.8)',opacity:op,offset:.14},
+          {transform:at(.62)+'scale(1.06,1.15)',opacity:op,offset:.58},
+          {transform:at(1)+'scale(.9,.6)',opacity:0,offset:1}
+        ],{duration:520,delay:base+dl,fill:'both',easing:'cubic-bezier(.3,0,.25,1)'}).onfinish=()=>sp.remove();
+      });
+      setTimeout(()=>{
+        if(!r.isConnected)return;
+        spark(r,'left:0;top:0;width:'+w+'px;height:'+h+'px;border-radius:8px;background:#fff3c0;z-index:5',[{opacity:.38},{opacity:0}],{duration:260});
+        for(let n=0;n<12;n++){const px=RN(-w*.2,w*1.2),py=RN(h*.15,h*.85),ang=RN(-2.6,-.5),d=RN(14,40);
+          spark(r,'left:'+px+'px;top:'+py+'px;width:3px;height:3px;background:#fff6c8;box-shadow:0 0 6px #ffc400;z-index:7',[{transform:'translate(0,0)',opacity:1},{transform:'translate('+Math.cos(ang)*d+'px,'+Math.sin(ang)*d+'px)',opacity:0}],{duration:RN(260,520),easing:'ease-out'})}
+      },base+170);
     });
-    for(let i=0;i<8;i++)spark(r,'left:'+(w*(.76+RN(0,.22)))+'px;top:'+(h*(.55+RN(0,.3)))+'px;width:3px;height:3px;background:#ffe98a;box-shadow:0 0 7px #ffd45a;z-index:5',[{transform:'translate(0,0)',opacity:0},{opacity:1,offset:.3},{transform:'translate('+RN(8,26)+'px,'+RN(-14,12)+'px)',opacity:0}],{duration:RN(380,600),delay:280+i*35});
   }
 }
 const EC={W:'#ffe9a8',U:'#6fc3ff',B:'#c29bff',R:'#ff8a4a',G:'#8cf0a0',C:'#e6edf5'};
