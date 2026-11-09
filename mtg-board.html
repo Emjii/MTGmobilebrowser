@@ -10,7 +10,7 @@
 :root{--felt:#14352c;--felt2:#0f2a23;--wood:#3b2616;--gold:#e3b95a;--ink:#f3ead7;--w:80px;--h:112px;color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 html,body{touch-action:manipulation;margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--wood);color:var(--ink);font:15px/1.3 Georgia,"Iowan Old Style",serif}
-#app{display:grid;grid-template-rows:auto 1fr 142px 190px;height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#app{display:grid;grid-template-rows:auto 1fr 190px;height:100%;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 #bar{display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--wood);flex-wrap:wrap}
 button{font:inherit;color:var(--ink);background:#5a3b22;border:1px solid #7d5733;border-radius:8px;padding:9px 14px;min-height:44px;touch-action:manipulation}
 button:active{background:#7d5733}
@@ -199,6 +199,11 @@ body.noanim *{animation:none!important}
 @keyframes mote{0%{transform:translate(0,0);opacity:0}20%{opacity:1}100%{transform:translate(-4px,-22px);opacity:0}}
 .kx-chain{filter:drop-shadow(0 0 4px #5aa8ffcc);animation:chainp 3.4s ease-in-out infinite}
 @keyframes chainp{0%,100%{opacity:.72}50%{opacity:1}}
+#manahud{position:absolute;left:10px;bottom:10px;z-index:3;pointer-events:none;display:flex;align-items:center;gap:8px;background:#000a;border:1px solid #7d5733;border-radius:18px;padding:3px 12px 3px 10px}
+#manahud #mana{margin:0;color:#cdbb97;font-size:13px}
+#manahud #mana b{font-size:24px;margin-right:4px;color:var(--gold);font-weight:400}
+#manahud #pips{display:flex}
+#manahud .pip{margin:0 0 0 3px}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
@@ -216,8 +221,8 @@ body.noanim *{animation:none!important}
     <button id="bCd" aria-label="Commander damage" title="Commander damage"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></svg></button>
     <div class="life"><button id="lm">−</button><span id="life">20</span><button id="lp">+</button></div>
   </div>
-  <div id="bf" data-zone="bf"><div id="pchips"></div><div id="turnb"></div><div id="tgb"></div><div id="world"><div id="mine"></div><svg id="arrows"><defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e3b95a"/></marker></defs><g id="arrg"></g></svg></div><div class="hint">Load a deck, then drag cards from your hand onto the table. Lands go to the strip below.<br>Double-tap a card to tap it. Tap once to preview, press and hold to zoom.</div></div>
-  <div id="lands" data-zone="land"><div id="manabox"><div class="lbl">Lands</div><div id="mana"><b>0</b>mana</div><div id="pips"></div></div><div id="lcards"></div></div>
+  <div id="bf" data-zone="bf"><div id="pchips"></div><div id="manahud"><div id="mana"><b>0</b>mana</div><div id="pips"></div></div><div id="turnb"></div><div id="tgb"></div><div id="world"><div id="mine"></div><svg id="arrows"><defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e3b95a"/></marker></defs><g id="arrg"></g></svg></div><div class="hint">Load a deck, then drag cards from your hand onto the table. Lands go there too, and tapped lands count as mana.<br>Double-tap a card to tap it. Tap once to preview, press and hold to zoom.</div></div>
+  <div id="lands" data-zone="land" style="display:none"><div id="lcards"></div></div>
   <div id="hand" data-zone="hand"></div>
 </div>
 
@@ -316,11 +321,22 @@ const ptOf=c=>{const f=c.power!=null?c:(c.card_faces&&c.card_faces[0]);return f&
 const tokensOf=c=>{const seen={};return (c.all_parts||[]).filter(p=>p.component==='token'&&!seen[p.name]&&(seen[p.name]=1)).map(p=>({id:p.id,name:p.name}))};
 const facesOf=c=>{const f=c.card_faces;return f&&f.length>1&&f[0].image_uris&&f[1].image_uris?f.map(x=>({name:x.name,img:x.image_uris.normal,pt:x.power!=null?x.power+'/'+x.toughness:'',land:/\bLand\b/.test((x.type_line||'').split(' // ')[0]),ty:typeOf(x.type_line),col:x.colors||[],...flagsOf(x.type_line),kw:kwOf(x.keywords||c.keywords),wd:wardOf(x.oracle_text)})):null};
 const entry0=c=>({name:c.name,img:imgOf(c)||(c.id?'https://api.scryfall.com/cards/'+c.id+'?format=image&version=normal':''),pt:ptOf(c),tokens:tokensOf(c),land:/\bLand\b/.test((c.type_line||(c.card_faces&&c.card_faces[0].type_line)||'').split(' // ')[0]),mana:c.produced_mana||[],faces:facesOf(c),ty:typeOf(c.type_line||(c.card_faces&&c.card_faces[0].type_line)),col:(c.colors&&c.colors.length?c.colors:(c.card_faces&&c.card_faces[0]&&c.card_faces[0].colors)||[])});
-const entry=c=>{const e=entry0(c);Object.assign(e,flagsOf(c.type_line||(c.card_faces&&c.card_faces[0]&&c.card_faces[0].type_line)));e.kw=kwOf(c.keywords);e.kwv=KWV;e.wd=wardOf(c.oracle_text||((c.card_faces||[]).map(f=>f.oracle_text||'').join('\n')));return e};
+const entry=c=>{const e=entry0(c);Object.assign(e,flagsOf(c.type_line||(c.card_faces&&c.card_faces[0]&&c.card_faces[0].type_line)));e.kw=kwOf(c.keywords);e.kwv=KWV;const orc=c.oracle_text||((c.card_faces||[]).map(f=>f.oracle_text||'').join('\n'));e.wd=wardOf(orc);const mp=(e.ty==='artifact'||e.land)?mpOf(orc,c.produced_mana):null;if(mp&&(e.ty==='artifact'||mp.n>1))e.mp=mp;return e};
 const clX=(x,W=FW)=>Math.max(-CW*.6,Math.min(W-CW*.4,x)),clY=(y,H=FH)=>Math.max(-CH*.6,Math.min(H-CH*.4,y));
 const typeOf=tl=>{tl=(tl||'').split(' // ')[0];return /Creature/.test(tl)?'creature':/Land/.test(tl)?'land':/Artifact/.test(tl)?'artifact':/\b(Instant|Sorcery|Enchantment)\b/.test(tl)?'spell':'other'};
 const KWMAP={Flying:'fly',Haste:'has',Deathtouch:'dth',Lifelink:'lif',Trample:'tra',Indestructible:'ind',Hexproof:'hex',Ward:'war',Vigilance:'vig',Undying:'und','Double strike':'dbl','First strike':'fst',Shroud:'shr'};
-const KWV=3;
+const KWV=4;
+const mpOf=(t,mana)=>{
+  if(!t||!mana||!mana.length)return null;
+  const words={one:1,two:2,three:3,an:1,a:1};
+  const any=t.match(/\{T\}[^:\n]*:\s*Add\s+(one|two|three|an?)\s+mana\s+of\s+any/i);
+  if(any)return{n:words[any[1].toLowerCase()],c:[],any:true};
+  const m=t.match(/((?:\{[^}]+\}[,\s]*)*)\{T\}[^:\n]*:\s*Add\s+((?:\{[^}]+\})+)/);
+  if(!m)return{n:1,c:[...new Set(mana)].filter(k=>'WUBRGC'.includes(k)),any:new Set(mana).size>1};
+  const sym=x=>(x.match(/\{([^}]+)\}/g)||[]).map(y=>y.slice(1,-1));
+  const prod=sym(m[2]).filter(k=>'WUBRGC'.includes(k)),pay=sym(m[1]||'').reduce((a,k)=>a+(/^\d+$/.test(k)?+k:1),0);
+  return{n:Math.max(0,prod.length-pay),c:prod};
+};
 const wardOf=t=>{
   const m=(t||'').match(/Ward\s*((?:\{[^}]+\})+|[—–-]\s*[^.\n(]+)/i);if(!m)return '';
   const a=m[1];
@@ -386,7 +402,7 @@ async function loadDeck(text){
 
 /* ---- game state ---- */
 function newGame(){
-  const all=S.deck.map(c=>({id:++uid,name:c.name,img:c.img,pt:c.pt||'',tokens:c.tokens||[],cn:{},x:0,y:0,t:false,cmd:!!c.cmd,land:!!c.land,mana:c.mana||[],faces:c.faces||null,face:0,ty:c.ty||'other',col:c.col||[],leg:!!c.leg,en:!!c.en,kw:c.kw||[],wd:c.wd||''}));
+  const all=S.deck.map(c=>({id:++uid,name:c.name,img:c.img,pt:c.pt||'',tokens:c.tokens||[],cn:{},x:0,y:0,t:false,cmd:!!c.cmd,land:!!c.land,mana:c.mana||[],faces:c.faces||null,face:0,ty:c.ty||'other',col:c.col||[],leg:!!c.leg,en:!!c.en,kw:c.kw||[],wd:c.wd||'',mp:c.mp}));
   S.lib=all.filter(c=>!c.cmd);S.cmd=all.filter(c=>c.cmd);
   S.mull=0;S.cd={};S.arrows=[];S.hand=[];S.bf=[];S.land=[];S.gy=[];S.ex=[];shuffle(S.lib);
   for(let i=0;i<7;i++)draw();
@@ -399,10 +415,7 @@ function flip(c){
   if(!c.faces)return;
   if(c.under&&c.under.length)c=peelOff(c);
   c.face=c.face?0:1;const f=c.faces[c.face];c.img=f.img;c.pt=f.pt;c.name=f.name;c.land=f.land;c.ty=f.ty;c.col=f.col;c.leg=f.leg;c.en=f.en;c.kw=f.kw||[];c.wd=f.wd||'';
-  const z=find(c.id);
-  if(z&&c.land&&z[0]==='bf')move(c.id,'land');
-  else if(z&&!c.land&&z[0]==='land')move(c.id,'bf',24,48);
-  else render();
+  render();
   if($('#peek').classList.contains('on'))showPeek(c.id);
 }
 function sameCard(a,b){
@@ -473,12 +486,21 @@ function render(){
       const x=pad+i*step,e=cardEl(c,'sm');e.style.left=x+'px';e.style.top='36px';LC.append(e);
       const mb=document.createElement('button');mb.className='more';mb.dataset.for=c.id;mb.textContent='…';mb.title='Card menu';mb.style.left=(x+LW)+'px';mb.style.top='2px';mb.onclick=()=>{showMore(c.id);cardMenu(c,mb)};LC.append(mb);
     });
-    const tp=[];S.land.forEach(c=>{if(c.t)for(let k=0;k<1+(c.under?c.under.length:0);k++)tp.push(c)});const cnt={};let any=0;
-    tp.forEach(c=>{const m=c.mana||[];if(m.length===1)cnt[m[0]]=(cnt[m[0]]||0)+1;else any++});
-    if(lastMana!==null&&lastMana!==tp.length)pulse($('#mana b'));lastMana=tp.length;$('#mana b').textContent=tp.length;
+    const cnt={};let any=0,total=0;
+    S.bf.forEach(c=>{
+      if(!c.t||!(c.land||c.mp))return;
+      for(let k=0;k<1+(c.under?c.under.length:0);k++){
+        if(c.mp){
+          total+=c.mp.n;
+          if(c.mp.any||new Set(c.mp.c).size>c.mp.n)any+=c.mp.n;
+          else c.mp.c.slice(0,c.mp.n).forEach(x=>cnt[x]=(cnt[x]||0)+1);
+        }else{total++;const m=c.mana||[];if(m.length===1)cnt[m[0]]=(cnt[m[0]]||0)+1;else any++}
+      }
+    });
+    if(lastMana!==null&&lastMana!==total)pulse($('#mana b'));lastMana=total;$('#mana b').textContent=total;
     const pp=$('#pips');pp.innerHTML='';
     ['W','U','B','R','G','C'].forEach(k=>{if(cnt[k]){const sp=document.createElement('span');sp.className='pip p'+k;sp.textContent=cnt[k];pp.append(sp)}});
-    if(any){const sp=document.createElement('span');sp.className='pip pany';sp.title='Lands that can make several colors';sp.textContent=any;pp.append(sp)}
+    if(any){const sp=document.createElement('span');sp.className='pip pany';sp.title='Sources that can make several colors';sp.textContent=any;pp.append(sp)}
   }
   const h=$('#hand');h.innerHTML='';S.hand.forEach(c=>h.append(cardEl(c)));
   $('#zLib b').textContent=S.lib.length;$('#zGy b').textContent=S.gy.length;$('#zEx b').textContent=S.ex.length;$('#zCmd b').textContent=S.cmd.length;
@@ -529,7 +551,6 @@ document.addEventListener('pointerup',e=>{
     if(!z){render();return}
     if(z==='bf'){const mr=$('#mine').getBoundingClientRect();if(e.clientX<mr.left||e.clientX>mr.right||e.clientY<mr.top||e.clientY>mr.bottom){render();return}}
     const fc=find(d.id),cd=fc&&S[fc[0]][fc[1]];
-    if(cd){if(z==='bf'&&cd.land)z='land';else if(z==='land'&&!cd.land)z='bf'}
     if(cd&&(z==='bf'||z==='land')){
       const st=stackTarget(d,cd,e);
       if(st==='self'){render();return}
@@ -695,7 +716,7 @@ $('#zGy').addEventListener('click',()=>openZone('gy'));
 $('#zEx').addEventListener('click',()=>openZone('ex'));
 $('#zCmd').addEventListener('click',()=>openZone('cmd'));
 $('#zc').onclick=()=>$('#zl').classList.remove('on');
-const BUILD='Build: Oct 23, golden diagonal double strike v40';
+const BUILD='Build: Oct 23, mana artifacts v42';
 document.querySelectorAll('.ver').forEach(e=>e.textContent=BUILD+'. If this is not the newest, reload the page.');
 
 /* ---- multiplayer (PeerJS, host relays) ---- */
@@ -825,7 +846,7 @@ function renderOpps(){
     const p=NET.players[t.id];if(!p)return;
     const f=document.createElement('div');f.className='ofield';f.dataset.pid=t.id;f.dataset.name=p.name;
     f.style.cssText='left:'+(t.cx-FW/2)+'px;top:'+(t.cy-FH/2)+'px;width:'+FW+'px;height:'+FH+'px;transform:rotate('+t.rot+'deg)';
-    if(T.p===t.id)f.style.borderColor='#e3b95a';const LH=70,sc=Math.min(FW/p.w,(FH-LH)/p.h),lay=document.createElement('div');
+    if(T.p===t.id)f.style.borderColor='#e3b95a';const LH=0,sc=Math.min(FW/p.w,(FH-LH)/p.h),lay=document.createElement('div');
     lay.className='olayer';lay.style.cssText='width:'+p.w+'px;height:'+p.h+'px;transform:scale('+sc+');transform-origin:top left';
     p.bf.forEach(c=>{
       const e=mini(c);if(c.en)e.dataset.ember=(c.col&&c.col.length?c.col:['C']).join(' ');if((p.fresh||[]).includes(c.g))e.classList.add('pop');e.style.left=c.x+'px';e.style.top=c.y+'px';lay.append(e);if((c.kw||[]).includes('fly'))e.dataset.fly=1;makeRig(lay,c.kw,c.x,c.y,c.t,c.wd);
@@ -1042,6 +1063,7 @@ function landFx(id,o){
   el.classList.remove('landing');void el.offsetWidth;el.classList.add('landing');
   setTimeout(()=>el.classList.remove('landing'),520);
   if(dusty)setTimeout(()=>impact(c.x+CW/2,c.y+CH-3,L),190);
+  if(c.land&&!soft)setTimeout(()=>landElement(el,c),150);
 }
 function fxSpan(box,css){const d=document.createElement('span');d.className='fx';d.style.cssText=css;box.append(d);return d}
 function impact(cx,cy,L){
@@ -1142,7 +1164,7 @@ function landPlace(id,fr,o){
   else go();
 }
 function landElement(el,c){
-  const box=$('#lcards'),w=el.offsetWidth,h=el.offsetHeight,x=el.offsetLeft,y=el.offsetTop,cx=x+w/2,cy=y+h/2,k=landColor(c);
+  const box=el.parentElement||$('#mine'),w=el.offsetWidth,h=el.offsetHeight,x=el.offsetLeft,y=el.offsetTop,cx=x+w/2,cy=y+h/2,k=landColor(c);
   if(k==='G'){
     for(let i=0;i<16;i++){
       const sz=RN(9,15),dx=RN(-80,80);
@@ -1437,18 +1459,17 @@ function giveCard(id,pid,cx,cy){
 function doGive(id,pid,x,y){
   let f=find(id);if(!f)return;
   const pc=S[f[0]][f[1]];if(pc.under&&pc.under.length){id=splitFor({id,whole:false});f=find(id)}const c=S[f[0]][f[1]];
-  const card={name:c.name,img:c.img,pt:c.pt,tokens:c.tokens||[],cn:c.cn||{},token:!!c.token,land:!!c.land,mana:c.mana||[],faces:c.faces||null,face:c.face||0,t:c.t?1:0,ty:c.ty,col:c.col,leg:c.leg,en:c.en,kw:c.kw,wd:c.wd};
+  const card={name:c.name,img:c.img,pt:c.pt,tokens:c.tokens||[],cn:c.cn||{},token:!!c.token,land:!!c.land,mana:c.mana||[],faces:c.faces||null,face:c.face||0,t:c.t?1:0,ty:c.ty,col:c.col,leg:c.leg,en:c.en,kw:c.kw,wd:c.wd,mp:c.mp};
   if(!sendTo({t:'give',to:pid,from:NET.name,card,x,y})){sysMsg('Could not reach '+nameOf(pid)+'. The card stayed with you.');return}
   const el0=document.querySelector('.card[data-id="'+id+'"]'),fr0=el0&&rectOf(el0),of0=document.querySelector('.ofield[data-pid="'+pid+'"]');
   S[f[0]].splice(f[1],1);render();sysMsg('You gave '+c.name+' to '+nameOf(pid));
   if(fr0&&of0){const q=rectOf(of0);flyClone(c.img,c.name,fr0,{left:q.left+q.width/2-20,top:q.top+q.height/2-28,width:40,height:56},{fade:true,dur:520})}
 }
 function receiveCard(m){
-  const k=m.card,c={id:++uid,name:k.name,img:k.img,pt:k.pt||'',tokens:k.tokens||[],cn:k.cn||{},token:k.token,land:k.land,mana:k.mana||[],faces:k.faces,face:k.face||0,t:!!k.t,x:0,y:0,ty:k.ty||'other',col:k.col||[],leg:!!k.leg,en:!!k.en,kw:k.kw||[],wd:k.wd||''};
-  if(c.land)S.land.push(c);
-  else{c.x=clX(m.x);c.y=clY(m.y);S.bf.push(c)}
+  const k=m.card,c={id:++uid,name:k.name,img:k.img,pt:k.pt||'',tokens:k.tokens||[],cn:k.cn||{},token:k.token,land:k.land,mana:k.mana||[],faces:k.faces,face:k.face||0,t:!!k.t,x:0,y:0,ty:k.ty||'other',col:k.col||[],leg:!!k.leg,en:!!k.en,kw:k.kw||[],wd:k.wd||'',mp:k.mp};
+  c.x=clX(m.x);c.y=clY(m.y);S.bf.push(c);
   sysMsg((m.from||'Someone')+' gave you '+c.name);render();
-  if(c.land)landPlace(c.id,null);else landFx(c.id);toast((m.from||'Someone')+' gave you '+c.name);
+  landFx(c.id);toast((m.from||'Someone')+' gave you '+c.name);
 }
 
 /* ---- saved decks (this device only) ---- */
@@ -1459,7 +1480,7 @@ function packDeck(){
   const m=new Map();
   S.deck.forEach(c=>{
     const k=c.name+'|'+(c.cmd?1:0),e=m.get(k);
-    if(e)e.n++;else m.set(k,{n:1,c:{name:c.name,img:c.img,pt:c.pt||'',tokens:c.tokens||[],land:!!c.land,mana:c.mana||[],faces:c.faces||null,cmd:!!c.cmd,ty:c.ty||'other',col:c.col||[],leg:!!c.leg,en:!!c.en,kw:c.kw||[],kwv:c.kwv,wd:c.wd||''}});
+    if(e)e.n++;else m.set(k,{n:1,c:{name:c.name,img:c.img,pt:c.pt||'',tokens:c.tokens||[],land:!!c.land,mana:c.mana||[],faces:c.faces||null,cmd:!!c.cmd,ty:c.ty||'other',col:c.col||[],leg:!!c.leg,en:!!c.en,kw:c.kw||[],kwv:c.kwv,wd:c.wd||'',mp:c.mp}});
   });
   return[...m.values()];
 }
@@ -1492,7 +1513,7 @@ async function upgradeSaved(d){
   }
   d.cards.forEach(e=>{
     const en=found[e.c.name.split(' // ')[0].toLowerCase()];
-    if(en){e.c.ty=en.ty;e.c.col=en.col;e.c.leg=en.leg;e.c.en=en.en;e.c.kw=en.kw||[];e.c.kwv=KWV;e.c.wd=en.wd||'';if(en.faces)e.c.faces=en.faces}
+    if(en){e.c.ty=en.ty;e.c.col=en.col;e.c.leg=en.leg;e.c.en=en.en;e.c.kw=en.kw||[];e.c.kwv=KWV;e.c.wd=en.wd||'';e.c.mp=en.mp;if(en.faces)e.c.faces=en.faces}
     else if(e.c.kwv!==KWV){e.c.ty=e.c.ty||'other';e.c.col=e.c.col||[];e.c.leg=e.c.leg||false;e.c.en=e.c.en||false;e.c.kw=e.c.kw||[];e.c.wd=e.c.wd||'';e.c.kwv=KWV}
   });
   return true;
